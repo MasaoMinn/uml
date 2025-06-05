@@ -29,17 +29,19 @@ export default function LoginSheet() {
     phoneNumber:null,
   };
   const register = () => {
-    axios.post('/api/user/register', {
-      userName: curuser.userName,
-      password: curuser.password,
-      emailAddress: curuser.emailAddress,
-      phoneNumber: curuser.phoneNumber,
+    axios.post('localhost:8080/user/register', {
+      body:{
+        userName: curuser.userName,
+        password: curuser.password,
+        emailAddress: curuser.emailAddress,
+        phoneNumber: curuser.phoneNumber
+      }
     }).then(response => {
       alert(response.data);
       // 假设响应中包含 token 和用户数据
       const { token, data } = response.data;
       setUserInfo(token, {
-        id: data.id || 0,
+        id: data.id,
         username: curuser.userName,
         password: curuser.password,
         emailAddress: curuser.emailAddress,
@@ -54,13 +56,13 @@ export default function LoginSheet() {
   }
   const login =() => {
     console.log("用户登录：",curuser);
-    axios.get('/api/user/login', {
-      params: {
+    axios.post('localhost:8080/user/login', {
+      Params: {
         status:0,
-        body: {
-          userName: curuser.userName,
-          password: curuser.password
-        }
+      },
+      Body: {
+        username: curuser.userName,
+        password: curuser.password
       }
     }).then(response => {
         alert('Login successfully!');
@@ -77,7 +79,7 @@ export default function LoginSheet() {
         });
         handleClose();
     }).catch(error => {
-        axios.get('/api/user/login', {
+        axios.get('localhost:8080/user/login', {
           params: {
             status:1,
             body: {
@@ -100,8 +102,10 @@ export default function LoginSheet() {
             });
             handleClose();
         }).catch(error => {
-          alert('Login failed, please check your username and password.');
+          alert(error);
         });
+    }).finally(()=> {
+
     });
   }
   const forget = () => {
