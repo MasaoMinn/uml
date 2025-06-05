@@ -36,7 +36,17 @@ export default function LoginSheet() {
       phoneNumber: curuser.phoneNumber,
     }).then(response => {
       alert(response.data);
-      setUserInfo(curuser.userName);// update user context
+      // 假设响应中包含 token 和用户数据
+      const { token, data } = response.data;
+      setUserInfo(token, {
+        id: data.id || 0,
+        username: curuser.userName,
+        password: curuser.password,
+        emailAddress: curuser.emailAddress,
+        telephone: curuser.phoneNumber || '',
+        createTime: data.createTime || '',
+        updateTime: data.updateTime || '',
+      });
       handleClose();
     }).catch(error => {
       alert(error);
@@ -44,27 +54,51 @@ export default function LoginSheet() {
   }
   const login =() => {
     console.log("用户登录：",curuser);
-    setUserInfo(curuser.userName);
-    handleClose();
     axios.get('/api/user/login', {
       params: {
         status:0,
-        userName: curuser.userName,
-        password: curuser.password,
+        body: {
+          userName: curuser.userName,
+          password: curuser.password
+        }
       }
     }).then(response => {
         alert('Login successfully!');
-        setUserInfo(curuser.userName); // 更新用户信息
+        // 假设响应中包含 token 和用户数据
+        const { token, data } = response.data;
+        setUserInfo(token, {
+          id: data.id || 0,
+          username: curuser.userName,
+          password: curuser.password,
+          emailAddress: curuser.emailAddress,
+          telephone: curuser.phoneNumber || '',
+          createTime: data.createTime || '',
+          updateTime: data.updateTime || '',
+        });
+        handleClose();
     }).catch(error => {
-          axios.get('/api/user/login', {
+        axios.get('/api/user/login', {
           params: {
-            status:0,
-            emailAddress: curuser.userName,
-            password: curuser.password,
+            status:1,
+            body: {
+              emailAddress: curuser.userName,
+              password: curuser.password
+            }
           }
         }).then(response => {
             alert('Login successfully!');
-            setUserInfo(curuser.userName); // 更新用户信息
+            // 假设响应中包含 token 和用户数据
+            const { token, data } = response.data;
+            setUserInfo(token, {
+              id: data.id || 0,
+              username: curuser.userName,
+              password: curuser.password,
+              emailAddress: curuser.emailAddress,
+              telephone: curuser.phoneNumber || '',
+              createTime: data.createTime || '',
+              updateTime: data.updateTime || '',
+            });
+            handleClose();
         }).catch(error => {
           alert('Login failed, please check your username and password.');
         });
