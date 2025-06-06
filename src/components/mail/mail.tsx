@@ -8,6 +8,7 @@ import Inbox from "./Inbox";
 import Sent from "./Sent";
 import Drafts from "./Drafts";
 import Folded from "./Folded";
+import Star from "./Star";
 
 // 更新 Mail 类型，支持多个附件
 type Mail = {
@@ -157,7 +158,7 @@ const Write = ({
 export default function MailComponent() {
     const { theme } = useTheme();
     const { userInfo } = useUserInfo(); // 获取用户信息
-    const [status, setStatus] = useState<'null'|'write'|'inbox'|'sent'|'drafts'|'folded'>('null');
+    const [status, setStatus] = useState<'null'|'write'|'inbox'|'sent'|'drafts'|'folded'|'star'>('null');
     const [newMail, setNewMail] = useState<Mail>({
         to: '',
         subject: '',
@@ -308,6 +309,12 @@ export default function MailComponent() {
                             >
                                 Write
                             </div>
+                            <div
+                                onClick={() => setStatus('star')}
+                                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'write' ? 'active' : ''}`}
+                            >
+                                star
+                            </div>
                         </Col>
                     </Row>
                 </Col>
@@ -329,9 +336,9 @@ export default function MailComponent() {
                         <Drafts />
                     ) : status === 'folded' ? (
                         <Folded />
-                    ) : (
-                        <div>Hello</div>
-                    )}
+                    ) : status === 'star' ? (
+                        <Star />
+                    ):(<div>Hello World</div>)}
                 </Col>
             </Row>
         </Container>

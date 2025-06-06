@@ -29,42 +29,30 @@ export default function LoginSheet() {
     phoneNumber:null,
   };
   const register = () => {
-    axios.post('localhost:8080/user/register', {
-      body:{
-        userName: curuser.userName,
-        password: curuser.password,
-        emailAddress: curuser.emailAddress,
-        phoneNumber: curuser.phoneNumber
-      }
+    console.log("用户注册：",curuser);
+    axios.post('http://localhost:8080/user/register', {
+      username: curuser.userName,
+      password: curuser.password,
+      emailAddress: curuser.emailAddress,
+      telephone: curuser.phoneNumber
     }).then(response => {
-      alert(response.data);
-      // 假设响应中包含 token 和用户数据
-      const { token, data } = response.data;
-      setUserInfo(token, {
-        id: data.id,
-        username: curuser.userName,
-        password: curuser.password,
-        emailAddress: curuser.emailAddress,
-        telephone: curuser.phoneNumber || '',
-        createTime: data.createTime || '',
-        updateTime: data.updateTime || '',
-      });
-      handleClose();
+      alert(response.data.message);
     }).catch(error => {
       alert(error);
+    }).finally(() => {
+      handleClose();
     });
   }
   const login =() => {
     console.log("用户登录：",curuser);
-    axios.post('localhost:8080/user/login', {
-      Params: {
-        status:0,
-      },
-      Body: {
-        username: curuser.userName,
-        password: curuser.password
+    axios.post("http://localhost:8080/user/login?status=0", {
+      username: curuser.userName,
+      password: curuser.password
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
       }
-    }).then(response => {
+      }).then(response => {
         alert('Login successfully!');
         // 假设响应中包含 token 和用户数据
         const { token, data } = response.data;
@@ -79,13 +67,12 @@ export default function LoginSheet() {
         });
         handleClose();
     }).catch(error => {
-        axios.get('localhost:8080/user/login', {
-          params: {
-            status:1,
-            body: {
-              emailAddress: curuser.userName,
-              password: curuser.password
-            }
+        axios.post('http://localhost:8080/user/login?status=1', {
+          emailAddress: curuser.userName,
+          password: curuser.password
+        },{
+          headers:{
+            'Content-Type': 'application/json'
           }
         }).then(response => {
             alert('Login successfully!');
@@ -105,7 +92,7 @@ export default function LoginSheet() {
           alert(error);
         });
     }).finally(()=> {
-
+      handleClose();
     });
   }
   const forget = () => {
@@ -114,31 +101,53 @@ export default function LoginSheet() {
 
   const Register = () => {
     return (
-        <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName}>
+        <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName} style={{height: 'auto'}} fluid>
           <Offcanvas.Header closeButton>
             <Offcanvas.Title className='mx-auto'>Login/Register</Offcanvas.Title>
           </Offcanvas.Header>
           <Offcanvas.Body>
+            <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary w-30 text-center"
+              >
+                User Name
+              </InputGroup.Text>
+              <Form.Control
+                placeholder="username"
+                aria-label="Recipient's username"
+                aria-describedby="basic-addon2"
+                className="border-primary"
+                type="string"
+                onChange={(e)=>curuser.userName=e.target.value}
+              />
+            </InputGroup>
               <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary w-30 text-center"
+              >
+                Email Address
+              </InputGroup.Text>
+              <Form.Control
+                placeholder='email address'
+                aria-label="Default"
+                aria-describedby="inputGroup-sizing-default"
+                className="border-primary"
+                onChange={(e)=>{curuser.emailAddress=e.target.value}}
+              />
+              <InputGroup.Text id="basic-addon2"
+                className="bg-primary text-white border-primary w-30 text-center">
+                @Hgmail.com
+              </InputGroup.Text>
+            </InputGroup>
+            <InputGroup className="mb-3 w-50 mx-auto">
               <InputGroup.Text 
                 id="inputGroup-sizing-default"
                 className="bg-primary text-white border-primary"
               >
-                User name
+                Password
               </InputGroup.Text>
-              <Form.Control
-                placeholder='username'
-                aria-label="Default"
-                aria-describedby="inputGroup-sizing-default"
-                className="border-primary"
-                onChange={(e)=>{curuser.userName=e.target.value}}
-              />
-              <InputGroup.Text id="basic-addon2"
-                className="bg-primary text-white border-primary">
-                @example.com
-              </InputGroup.Text>
-            </InputGroup>
-            <InputGroup className="mb-3 w-50 mx-auto">
               <Form.Control
                 placeholder="password"
                 aria-label="Recipient's username"
@@ -150,15 +159,20 @@ export default function LoginSheet() {
               />
             </InputGroup>
             <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary w-30 text-center"
+              >
+                Phone Number
+              </InputGroup.Text>
               <Form.Control
                 placeholder="phone number"
                 aria-label="Recipient's username"
                 aria-describedby="basic-addon2"
                 className="border-primary"
-                type="password"
+                type="number"
                 // 使用优化后的函数
-                onChange={(e)=>{curuser.emailAddress=e.target.value}}
-                value={curuser.emailAddress || ''}  // 确保 mailbox 是字符串
+                onChange={(e)=>{curuser.phoneNumber=e.target.value}}
               />
             </InputGroup>
             <div className="d-flex justify-content-center gap-2">

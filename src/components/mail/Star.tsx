@@ -5,8 +5,8 @@ import axios from 'axios';
 import { ListGroup, Card, Button, Pagination } from 'react-bootstrap';
 import styled from 'styled-components';
 
-// 定义收件箱邮件项类型
-type InboxMailItem = {
+// 定义收藏邮件项类型
+type StarMailItem = {
   id: number;
   senderId: number;
   receiverId: number;
@@ -19,25 +19,18 @@ type InboxMailItem = {
   junk: number;
 };
 
-// 定义收件箱响应数据类型
-type InboxResponse = {
+// 定义收藏邮件响应数据类型
+type StarResponse = {
   code: number;
   message: string;
   data: {
-    records: InboxMailItem[];
+    records: StarMailItem[];
     total: number;
     size: number;
     current: number;
     pages: number;
   };
 };
-type attachment = {
-  id: number;
-  fileName: string;
-  downloadUrl: string;
-  createTime: string;
-  fileSize: string;
-}
 
 // 定义邮件详细信息类型
 type MailDetail = {
@@ -52,7 +45,13 @@ type MailDetail = {
     theme: string;
     content: string;
     sendtime: string;
-    attachments: attachment[] | null
+    attachments: {
+      id: number;
+      fileName: string;
+      downloadUrl: string;
+      createTime: string;
+      fileSize: string;
+    }[] | null;
   };
 };
 
@@ -64,8 +63,8 @@ const MailListItem = styled(ListGroup.Item)`
   }
 `;
 
-// 定义收件箱列表容器样式
-const InboxListContainer = styled.div`
+// 定义收藏邮件列表容器样式
+const StarListContainer = styled.div`
   border: 1px solid #dee2e6;
   border-radius: 4px;
   padding: 16px;
@@ -79,12 +78,12 @@ const MailDetailCard = styled(Card)`
   padding: 16px;
 `;
 
-// 定义整个收件箱容器样式
-const InboxContainer = styled.div`
-  border: 1px solid #ccc; // 设置边框，颜色为浅灰色
-  border-radius: 8px; // 设置边框圆角
-  padding: 20px; // 设置内边距
-  margin-top: 20px; // 设置顶部外边距
+// 定义整个收藏邮件容器样式
+const StarContainer = styled.div`
+  border: 1px solid #ccc; 
+  border-radius: 8px; 
+  padding: 20px; 
+  margin-top: 20px; 
 `;
 
 // 定义附件列表样式
@@ -98,9 +97,9 @@ const AttachmentItem = styled.li`
   margin: 8px 0;
 `;
 
-const Inbox = () => {
+const Star = () => {
   const { userInfo } = useUserInfo();
-  const [inboxMails, setInboxMails] = useState<InboxMailItem[]>([]);
+  const [starMails, setStarMails] = useState<StarMailItem[]>([]);
   const [selectedMailDetail, setSelectedMailDetail] = useState<MailDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,8 +107,8 @@ const Inbox = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  // 获取收件箱邮件列表
-  const fetchInboxMails = useCallback(async (p: number) => {
+  // 获取收藏邮件列表
+  const fetchStarMails = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
     if (userInfo?.data.username === 'Data Not Found') {
@@ -118,8 +117,7 @@ const Inbox = () => {
       return;
     }
     try {
-      const response = await axios.post<InboxResponse>('http://localhost:8080/mail/view', {
-        type: 1,
+      const response = await axios.post<StarResponse>('http://localhost:8080/mail/star', {
         page: p,
         size: pageSize,
       }, {
@@ -129,7 +127,7 @@ const Inbox = () => {
         }
       });
       if (response.data.code === 0) {
-        setInboxMails(response.data.data.records);
+        setStarMails(response.data.data.records);
         setTotal(response.data.data.total);
       } else {
         setError(response.data.message);
@@ -138,7 +136,7 @@ const Inbox = () => {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('获取收件箱邮件失败');
+        setError('获取收藏邮件失败');
       }
     } finally {
       setLoading(false);
@@ -148,7 +146,7 @@ const Inbox = () => {
   // 获取邮件详细信息
   const fetchMailDetail = useCallback(async (mailId: number) => {
     setError(null);
-    if (!userInfo ) {
+    if (userInfo?.data.username === 'Data Not Found') {
       setError('用户信息未找到');
       return;
     }
@@ -180,12 +178,12 @@ const Inbox = () => {
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
-    fetchInboxMails(page);
+    fetchStarMails(page);
   };
 
   useEffect(() => {
-    fetchInboxMails(currentPage);
-  }, [fetchInboxMails, currentPage]);
+    fetchStarMails(currentPage);
+  }, [fetchStarMails, currentPage]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -209,18 +207,18 @@ const Inbox = () => {
   const pageNumbers = getPageNumbers();
 
   return (
-    <InboxContainer>
-      <h2>收件箱</h2>
+    <StarContainer>
+      <h2>收藏邮件</h2>
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && (
-        <InboxListContainer>
-          {inboxMails.length === 0 ? (
-            <h2>暂无邮件</h2>
+        <StarListContainer>
+          {starMails.length === 0 ? (
+            <h2>暂无收藏邮件</h2>
           ) : (
             <>
               <ListGroup>
-                {inboxMails.map((mail) => (
+                {starMails.map((mail) => (
                   <MailListItem
                     key={mail.id}
                     onClick={() => fetchMailDetail(mail.id)}
@@ -263,7 +261,7 @@ const Inbox = () => {
               )}
             </>
           )}
-        </InboxListContainer>
+        </StarListContainer>
       )}
 
       {selectedMailDetail && (
@@ -294,8 +292,8 @@ const Inbox = () => {
           </Card.Body>
         </MailDetailCard>
       )}
-    </InboxContainer>
+    </StarContainer>
   );
 };
 
-export default Inbox;
+export default Star;
