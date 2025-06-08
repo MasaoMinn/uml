@@ -311,7 +311,7 @@ export default function MailComponent() {
                             </div>
                             <div
                                 onClick={() => setStatus('star')}
-                                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'write' ? 'active' : ''}`}
+                                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'star' ? 'active' : ''}`}
                             >
                                 star
                             </div>
@@ -338,7 +338,7 @@ export default function MailComponent() {
                         <Folded />
                     ) : status === 'star' ? (
                         <Star />
-                    ):(<div>Hello World</div>)}
+                    ):(<h1 style={{color:'red'}} className="text-center">Please Login first</h1>)}
                 </Col>
             </Row>
         </Container>

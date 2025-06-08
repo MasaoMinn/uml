@@ -23,7 +23,7 @@ export default function Main() {
       </Row>
       <Row>
         <Col>
-          <UserCard />
+          {user.userInfo&&<UserCard />}
         </Col>
       </Row>
       <Row>

@@ -35,6 +35,10 @@ export default function LoginSheet() {
       password: curuser.password,
       emailAddress: curuser.emailAddress,
       telephone: curuser.phoneNumber
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
     }).then(response => {
       alert(response.data.message);
     }).catch(error => {
@@ -153,8 +157,6 @@ export default function LoginSheet() {
                 aria-label="Recipient's username"
                 aria-describedby="basic-addon2"
                 className="border-primary"
-                type="password"
-                // 使用优化后的函数
                 onChange={(e)=>curuser.password=e.target.value}
               />
             </InputGroup>
@@ -201,28 +203,29 @@ export default function LoginSheet() {
                 id="inputGroup-sizing-default"
                 className="bg-primary text-white border-primary"
               >
-                User name
+                User name or Email address
               </InputGroup.Text>
               <Form.Control
-                placeholder='username'
+                placeholder=''
                 aria-label="Default"
                 aria-describedby="inputGroup-sizing-default"
                 className="border-primary"
                 // 使用优化后的函数
                 onChange={(e)=>{curuser.userName=e.target.value}}
               />
-              <InputGroup.Text id="basic-addon2"
-                className="bg-primary text-white border-primary">
-                @example.com
-              </InputGroup.Text>
             </InputGroup>
             <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary"
+              >
+                Password
+              </InputGroup.Text>
               <Form.Control
-                placeholder="password"
+                placeholder=""
                 aria-label="Recipient's username"
                 aria-describedby="basic-addon2"
                 className="border-primary"
-                type="password"
                 onChange={(e)=>curuser.password=e.target.value}
               />
             </InputGroup>
