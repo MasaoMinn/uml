@@ -61,7 +61,7 @@ type UserContextType = {
 };
 
 // 创建上下文（默认值需要保持一致的类型结构）
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType | null>(null);
 
 // 自定义Hook组件
 export const useUserInfo = () => {

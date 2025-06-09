@@ -21,7 +21,7 @@ export default function LoginSheet() {
   const {theme} = useTheme();
   const { userInfo, setUserInfo } = useUserInfo();
   const offcanvasClassName = theme === 'dark' ? 'bg-dark text-white' : 'bg-light text-dark';
-  const [status, setStatus] = useState<'login' | 'register' | 'forget'>('login');
+  const [status, setStatus] = useState<'login' | 'register' | 'forget1'|'forget2'|'forget3'>('login');
   let curuser:User={
     userName: '',
     password: null,
@@ -113,10 +113,10 @@ export default function LoginSheet() {
         alert('Logout successfully!');
         setUserInfo('', {
           id: 0,
-          username: 'Not Found',
+          username: '',
           password: null,
-          emailAddress: 'Not Found',
-          telephone: 'Not Found',
+          emailAddress: '',
+          telephone: '',
           createTime: '',
           updateTime: ''
         });
@@ -128,9 +128,6 @@ export default function LoginSheet() {
     }).finally(() => {
       handleClose();
     });
-  }
-  const forget = () => {
-    
   }
 
   const Register = () => {
@@ -266,7 +263,7 @@ export default function LoginSheet() {
               <Button variant={theme} type="button" className="w-40" onClick={() => setStatus('register')}>
                 Register
               </Button>
-              <Button variant="link" type="button" className="w-20 text-primary" onClick={() => setStatus('forget')}>
+              <Button variant="link" type="button" className="w-20 text-primary" onClick={() => setStatus('forget1')}>
                 Forgot?
               </Button>
             </div>
@@ -274,7 +271,21 @@ export default function LoginSheet() {
         </Offcanvas>
     )
   }
-  const Forget = () => {
+  const Forget1 = () => {
+  const check1 = (b:boolean) => {
+    axios.post('localhost:8080/user/forgetps1',{
+      status : b? 0 : 1,
+      username: curuser.userName,
+      emailAddress: curuser.emailAddress,
+    }).then(response => {
+      alert(response.data.message);
+      if(response.data.code==0) {
+        setStatus('forget2');
+      }
+    }).catch((err)=>{
+      alert(err);
+    });
+  }
     return (
         <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName}>
           <Offcanvas.Header closeButton>
@@ -286,7 +297,7 @@ export default function LoginSheet() {
                 id="inputGroup-sizing-default"
                 className="bg-primary text-white border-primary"
               >
-                User phone number
+                Check with user name
               </InputGroup.Text>
               <Form.Control
                 placeholder='username'
@@ -295,27 +306,164 @@ export default function LoginSheet() {
                 className="border-primary"
                 onChange={(e)=>{curuser.userName=e.target.value}}
               />
+              <Button onClick={()=>{check1(true)}}>Check</Button>
             </InputGroup>
+            <p className="text-center">OR</p>
+            <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary"
+              >
+               Check with Email Address
+              </InputGroup.Text>
+              <Form.Control
+                placeholder='email'
+                aria-label="Default"
+                aria-describedby="inputGroup-sizing-default"
+                className="border-primary"
+                onChange={(e)=>{curuser.userName=e.target.value}}
+              />
+              <Button onClick={()=>{check1(false)}}>Check</Button>
+            </InputGroup>
+
             <div className="d-flex justify-content-center gap-2">
               <Button variant={theme} type="button" className="w-40" onClick={() => setStatus('login')}>
                 Return to Login
-              </Button>
-              <Button variant="primary" type="button" className="w-40">
-                Check
               </Button>
             </div>
           </Offcanvas.Body>
         </Offcanvas>
     )
   }
+  const Forget2 = () => {
+    const [err, setErr] = useState('');
+    const check2 = () => {
+      axios.get('http://localhost:8080/user/forgetps2', {
+        params: {
+          code: curuser.password,
+          telephone: curuser.phoneNumber,
+        }
+        ,headers: {
+        'Content-Type': 'application/json',
+        }
+      }).then(response => {
+        alert(response.data.message);
+        if(response.data.code==0) {
+          setStatus('forget3');
+        }else {
+          setErr(response.data.message);
+        }
+      }).catch((err)=>{
+        setErr(err.message);
+      });
+    }
+    const send  = () => {
+
+    }
+    return (
+      <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName}>
+          <Offcanvas.Header closeButton>
+            <Offcanvas.Title className='mx-auto'>Login/Register</Offcanvas.Title>
+          </Offcanvas.Header>
+          <Offcanvas.Body>
+              <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary"
+              >
+                code
+              </InputGroup.Text>
+              <Form.Control
+                placeholder='code'
+                aria-label="Default"
+                aria-describedby="inputGroup-sizing-default"
+                className="border-primary"
+                onChange={(e)=>{curuser.password=e.target.value}}
+              />
+              <Button onClick={()=>{send}}>Get</Button>
+            </InputGroup>
+            <div className="d-flex justify-content-center gap-2">
+              <Button variant={theme} type="button" className="w-40" onClick={() => setStatus('login')}>
+                Return to Login
+              </Button>
+              <Button variant="primary" type="button" className="w-40" onClick={check2}>
+                Check
+              </Button>
+            </div>
+            <p className="text-center">{err}</p>
+          </Offcanvas.Body>
+        </Offcanvas>
+    )
+  }
+  const Forget3 = () => {
+    let passw:string='';
+    const [err, setErr] = useState('');
+    const check3 = () => {
+      if(passw!=curuser.password) {
+        setErr('Passwords do not match');
+        return;
+      }
+
+    }
+    return (
+        <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName}>
+          <Offcanvas.Header closeButton>
+            <Offcanvas.Title className='mx-auto'>Login/Register</Offcanvas.Title>
+          </Offcanvas.Header>
+          <Offcanvas.Body>
+              <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary"
+              >
+                New Password
+              </InputGroup.Text>
+              <Form.Control
+                placeholder='new password'
+                aria-label="Default"
+                aria-describedby="inputGroup-sizing-default"
+                className="border-primary"
+                onChange={(e)=>{curuser.password=e.target.value}}
+              />
+            </InputGroup>
+              <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary"
+              >
+                Check Password
+              </InputGroup.Text>
+              <Form.Control
+                placeholder='re-input password'
+                aria-label="Default"
+                aria-describedby="inputGroup-sizing-default"
+                className="border-primary"
+                onChange={(e)=>{passw=e.target.value}}
+              />
+            </InputGroup>
+            <div className="d-flex justify-content-center gap-2">
+              <Button variant={theme} type="button" className="w-40" onClick={() => setStatus('login')}>
+                Return to Login
+              </Button>
+              <Button variant="primary" type="button" className="w-40" onClick={check3}>
+                Check
+              </Button>
+            </div>
+            <p className="text-center">{err}</p>
+          </Offcanvas.Body>
+        </Offcanvas>
+    ) 
+  }
     
   return (
     <>
-      {!userInfo?.data&&<Button variant={theme} onClick={handleShow}>登录/注册</Button>}
+      {!userInfo?.data&&<Button variant={theme} onClick={()=>{setStatus('login');handleShow()}}>登录/注册</Button>}
       {userInfo?.data&&<Button variant={theme} onClick={logout}>退出登录</Button>}
       {status === 'login' && <Login />}
       {status === 'register' && <Register />}
-      {status === 'forget' && <Forget />}
+      {status === 'forget1' && <Forget1 />}
+      {status === 'forget2' && <Forget2 />}
+      {status === 'forget3' && <Forget3 />}
     </>
   );
 }

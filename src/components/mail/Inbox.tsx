@@ -4,6 +4,7 @@ import { useUserInfo } from '@/context/user';
 import axios from 'axios';
 import { ListGroup, Card, Button, Pagination } from 'react-bootstrap';
 import styled from 'styled-components';
+import { useTheme,darkTheme,lightTheme } from '@/context/theme';
 
 // 定义收件箱邮件项类型
 type InboxMailItem = {
@@ -59,9 +60,6 @@ type MailDetail = {
 // 定义邮件列表项样式
 const MailListItem = styled(ListGroup.Item)`
   cursor: pointer;
-  &:hover {
-    background-color: #f8f9fa;
-  }
 `;
 
 // 定义收件箱列表容器样式
@@ -210,9 +208,10 @@ const Inbox = () => {
   };
 
   const pageNumbers = getPageNumbers();
+  const {theme} = useTheme();
 
   return (
-    <InboxContainer>
+    <InboxContainer style={theme==='dark'?darkTheme:lightTheme}>
       <h2>收件箱</h2>
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -222,9 +221,9 @@ const Inbox = () => {
             <h2>暂无邮件</h2>
           ) : (
             <>
-              <ListGroup>
+              <ListGroup >
                 {inboxMails.map((mail) => (
-                  <MailListItem
+                  <MailListItem  style={theme==='dark'?darkTheme:lightTheme}
                     key={mail.id}
                     onClick={() => fetchMailDetail(mail.id)}
                     isread={mail.isread === 1}

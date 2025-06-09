@@ -8,11 +8,11 @@ import { useTheme, darkTheme, lightTheme } from "@/context/theme";
 import UserCard from "@/components/userCard";
 import Mail from "../components/mail/mail";
 export default function Main() {
-  const [user,setUser] = useState(useUserInfo());
+  
   const {theme} = useTheme();
   // 根据主题选择对应的样式
   const containerStyle = theme === 'dark' ? darkTheme : lightTheme;
-
+  const { userInfo } = useUserInfo();
   return (
     // 应用选择的样式
     <Container fluid style={containerStyle} className="p-2"> 
@@ -23,7 +23,7 @@ export default function Main() {
       </Row>
       <Row>
         <Col>
-          {user.userInfo&&<UserCard />}
+          {userInfo?.data&&<UserCard />}
         </Col>
       </Row>
       <Row>

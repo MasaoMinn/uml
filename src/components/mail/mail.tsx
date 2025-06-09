@@ -276,7 +276,7 @@ export default function MailComponent() {
 
     return (
         <Container className="" fluid>
-            <Row className="mb-2" style={{height: '100vh'}}>
+            <Row className="mb-2" style={{minHeight: '100vh'}}>
                 <Col lg={1}>
                     <Row>
                         <Col>
