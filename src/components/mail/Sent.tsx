@@ -78,7 +78,7 @@ const Sent = () => {
       return;
     }
     try {
-      const response = await axios.post<SentResponse>('http://localhost:8080/mail/sent', {
+      const response = await axios.post<SentResponse>('http://localhost:8080/mail/view', {
         type:2,
         page: p,
         size: pageSize,

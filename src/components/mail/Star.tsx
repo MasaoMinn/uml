@@ -117,7 +117,8 @@ const Star = () => {
       return;
     }
     try {
-      const response = await axios.post<StarResponse>('http://localhost:8080/mail/star', {
+      const response = await axios.post<StarResponse>('http://localhost:8080/mail/view', {
+        type: 5,
         page: p,
         size: pageSize,
       }, {

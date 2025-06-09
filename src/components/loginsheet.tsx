@@ -99,6 +99,36 @@ export default function LoginSheet() {
       handleClose();
     });
   }
+
+  const logout = () => {
+    axios({
+      url: 'http://localhost:8080/user/deleteuser',
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: userInfo?.token
+      }
+    }).then(response => {
+      if (response.data.code === 0) {
+        alert('Logout successfully!');
+        setUserInfo('', {
+          id: 0,
+          username: 'Not Found',
+          password: null,
+          emailAddress: 'Not Found',
+          telephone: 'Not Found',
+          createTime: '',
+          updateTime: ''
+        });
+      } else {
+        alert(response.data.message);
+      }
+    }).catch(error => {
+      alert('Logout failed: ' + error);
+    }).finally(() => {
+      handleClose();
+    });
+  }
   const forget = () => {
     
   }
@@ -282,7 +312,7 @@ export default function LoginSheet() {
   return (
     <>
       {!userInfo?.data&&<Button variant={theme} onClick={handleShow}>登录/注册</Button>}
-      {userInfo?.data&&<Button variant={theme} onClick={handleShow}>退出登录</Button>}
+      {userInfo?.data&&<Button variant={theme} onClick={logout}>退出登录</Button>}
       {status === 'login' && <Login />}
       {status === 'register' && <Register />}
       {status === 'forget' && <Forget />}

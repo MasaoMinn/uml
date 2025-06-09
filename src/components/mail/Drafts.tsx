@@ -79,7 +79,7 @@ const Drafts = () => {
     }
     try {
       // 请替换为实际的草稿邮件接口
-      const response = await axios.post<DraftResponse>('http://localhost:8080/mail/drafts', {
+      const response = await axios.post<DraftResponse>('http://localhost:8080/mail/view', {
         type:3,
         page: p,
         size: pageSize,
