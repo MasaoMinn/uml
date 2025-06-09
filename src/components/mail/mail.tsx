@@ -158,7 +158,7 @@ const Write = ({
 export default function MailComponent() {
     const { theme } = useTheme();
     const { userInfo } = useUserInfo(); // 获取用户信息
-    const [status, setStatus] = useState<'null'|'write'|'inbox'|'sent'|'drafts'|'folded'|'star'>('null');
+    const [status, setStatus] = useState<'write'|'inbox'|'sent'|'drafts'|'folded'|'star'>('inbox');
     const [newMail, setNewMail] = useState<Mail>({
         to: '',
         subject: '',
@@ -339,7 +339,7 @@ export default function MailComponent() {
                         <Folded />
                     ) : status === 'star' ? (
                         <Star />
-                    ):(<h1 style={{color:'red'}} className="text-center">Please Login first</h1>)}
+                    ):(<h1 style={{color:'red'}} className="text-center">你怎么弄到这里来的？</h1>)}
                 </Col>
             </Row>
         </Container>
