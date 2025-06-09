@@ -111,8 +111,8 @@ const Star = () => {
   const fetchStarMails = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
-    if (userInfo?.data.username === 'Data Not Found') {
-      setError('用户信息未找到');
+    if (!userInfo?.data) {
+      setError('Please log in to view your starred mails.');
       setLoading(false);
       return;
     }

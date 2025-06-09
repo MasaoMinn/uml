@@ -72,8 +72,8 @@ const Drafts = () => {
   const fetchDraftMails = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
-    if (!userInfo) {
-      setError('用户信息未找到');
+    if (!userInfo?.data) {
+      setError('Please log in to view your drafts.');
       setLoading(false);
       return;
     }

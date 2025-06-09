@@ -72,8 +72,8 @@ const Folded = () => {
   const fetchFoldedMails = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
-    if (!userInfo) {
-      setError('用户信息未找到');
+    if (!userInfo?.data) {
+      setError('Please log in to view folded mails.');
       setLoading(false);
       return;
     }

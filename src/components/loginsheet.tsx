@@ -281,9 +281,8 @@ export default function LoginSheet() {
     
   return (
     <>
-      <Button variant={theme} onClick={handleShow}>
-        登录/注册
-      </Button>
+      {!userInfo?.data&&<Button variant={theme} onClick={handleShow}>登录/注册</Button>}
+      {userInfo?.data&&<Button variant={theme} onClick={handleShow}>退出登录</Button>}
       {status === 'login' && <Login />}
       {status === 'register' && <Register />}
       {status === 'forget' && <Forget />}

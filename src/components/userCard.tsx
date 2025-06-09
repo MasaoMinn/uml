@@ -80,7 +80,7 @@ export default () => {
   
   // 添加 fetchUser 方法定义
   const fetchUser = useCallback(async () => {
-    if (!userInfo) {
+    if (!userInfo?.data) {
       setError('用户信息未找到');
       setCfUser(defaultUser);
       return;

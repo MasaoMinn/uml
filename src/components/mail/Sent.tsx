@@ -72,8 +72,8 @@ const Sent = () => {
   const fetchSentMails = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
-    if (!userInfo) {
-      setError('用户信息未找到');
+    if (!userInfo?.data) {
+      setError('Please log in to view sent mails.');
       setLoading(false);
       return;
     }

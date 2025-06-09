@@ -214,6 +214,7 @@ export default function MailComponent() {
 
             await axios.post('/api/mail/send', formData, {
                 headers: {
+                    Authorization: userInfo?.token,
                     'Content-Type': 'multipart/form-data'
                 }
             });
@@ -319,7 +320,7 @@ export default function MailComponent() {
                     </Row>
                 </Col>
                 <Col lg={10}>
-                    {status === 'write' ? (
+                    {status === 'write' ? userInfo?.data&&(
                         <Write
                             newMail={newMail}
                             handleInputChange={handleInputChange}

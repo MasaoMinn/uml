@@ -112,8 +112,8 @@ const Inbox = () => {
   const fetchInboxMails = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
-    if (userInfo?.data.username === 'Data Not Found') {
-      setError('用户信息未找到');
+    if (!userInfo?.data) {
+      setError('Please log in to view your inbox.');
       setLoading(false);
       return;
     }
@@ -147,7 +147,7 @@ const Inbox = () => {
 
   // 获取邮件详细信息
   const fetchMailDetail = useCallback(async (mailId: number) => {
-    setError(null);
+    console.log('Fetching mail detail for ID:', mailId);
     if (!userInfo ) {
       setError('用户信息未找到');
       return;
@@ -182,6 +182,9 @@ const Inbox = () => {
     setCurrentPage(page);
     fetchInboxMails(page);
   };
+  useEffect(() => {
+    setSelectedMailDetail(null);
+  }, [inboxMails]); // 添加 inboxMails 作为依赖项
 
   useEffect(() => {
     fetchInboxMails(currentPage);
