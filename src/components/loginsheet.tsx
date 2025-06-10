@@ -69,18 +69,20 @@ export default function LoginSheet() {
           createTime: data.createTime || '',
           updateTime: data.updateTime || '',
         });
-        handleClose();
     }).catch(error => {
-        axios.post('http://localhost:8080/user/login?status=1', {
+        alert(error);
+        axios.post('http://localhost:8080/user/login', {
           emailAddress: curuser.userName,
           password: curuser.password
         },{
           headers:{
             'Content-Type': 'application/json'
+          },
+          params:{
+            status: 1
           }
         }).then(response => {
             alert('Login successfully!');
-            // 假设响应中包含 token 和用户数据
             const { token, data } = response.data;
             setUserInfo(token, {
               id: data.id || 0,
@@ -277,9 +279,15 @@ export default function LoginSheet() {
   const Forget1 = () => {
   const check1 = () => {
     axios.post('localhost:8080/user/forgetps1',{
-      status : stat? 0 : 1,
       username: curuser.userName,
       emailAddress: curuser.emailAddress,
+    },{
+      headers: {
+        'Content-Type': 'application/json',
+      }
+      ,params:{
+        status: stat?1:0, 
+      }
     }).then(response => {
       alert(response.data.message);
       if(response.data.code==0) {
@@ -342,13 +350,14 @@ export default function LoginSheet() {
   const Forget2 = () => {
     const [err, setErr] = useState('');
     const check2 = () => {
-      axios.get('http://localhost:8080/user/forgetps3', {
-        params: {
-          code: curuser.password,
+      axios.post('http://localhost:8080/user/forgetps3', {
           telephone: curuser.phoneNumber,
+        },{
+        headers: {
+          'Content-Type': 'application/json',
         }
-        ,headers: {
-        'Content-Type': 'application/json',
+        ,params:{
+          code: curuser.password,
         }
       }).then(response => {
         alert(response.data.message);

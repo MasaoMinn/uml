@@ -38,7 +38,6 @@ const defaultUser: User = {
 
 export default () => {
   const { userInfo, setUserInfo } = useUserInfo();
-  const [cfUser, setCfUser] = useState<User>(defaultUser);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // 新增编辑相关状态
@@ -59,49 +58,8 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    try {
-      const response = await axios.put("", editedUser, {
-        headers: { Authorization: `Bearer ${userInfo.token}` }
-      });
-      
-      if (response.data.status === 'OK') {
-        // 更新上下文和本地状态
-        setUserInfo(userInfo.token, editedUser);
-        setCfUser({ token: userInfo.token, data: editedUser });
-        setIsEditing(false);
-      }
-    } catch (err) {
-      setError('更新用户信息失败');
-    } finally {
-      setIsLoading(false);
-    }
+    
   };
-  
-  // 添加 fetchUser 方法定义
-  const fetchUser = useCallback(async () => {
-    if (!userInfo?.data) {
-      setError('用户信息未找到');
-      setCfUser(defaultUser);
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(`/api/user`, {
-        headers: { Authorization: `Bearer ${userInfo.token}` }
-      });
-      
-      if (response.data.status === 'OK') {
-        const userData = response.data.result;
-        setCfUser({ token: userInfo.token, data: userData });
-        setUserInfo(userInfo.token, userData);
-      }
-    } catch (err) {
-      setError('获取用户信息失败');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userInfo]);
 
   return (
     <Card style={{ 
@@ -119,11 +77,11 @@ export default () => {
       
       {error && (
         <div className="alert alert-danger m-3">
-          {error}，请<a href="#" onClick={(e) => { e.preventDefault(); fetchUser(); }}>重试</a>
+          {error}，请<a href="#" onClick={(e) => { e.preventDefault(); }}>重试</a>
         </div>
       )}
 
-      {cfUser && (
+      {userInfo?.data && (
         <Container>
           <Row>
             <Col>
@@ -177,11 +135,20 @@ export default () => {
                   // 非编辑状态显示
                   <div>
                     <Card.Text style={{whiteSpace:'nowrap'}}>
-                      {/* 原有信息展示... */}
+                      {/* 显示用户信息 */}
+                      {userInfo?.data && (
+                        <>
+                          <p>用户名: {userInfo.data.username}</p>
+                          <p>邮箱地址: {userInfo.data.emailAddress}</p>
+                          <p>电话号码: {userInfo.data.telephone}</p>
+                          <p>创建时间: {userInfo.data.createTime}</p>
+                          <p>更新时间: {userInfo.data.updateTime}</p>
+                        </>
+                      )}
                     </Card.Text>
                     <div className="d-flex gap-2">
                       <Button variant={`${useTheme().theme}`} style={{border:'2px skyblue solid'}} 
-                        onClick={fetchUser} disabled={isLoading}>
+                         disabled={isLoading}>
                         {isLoading ? '更新中...' : '刷新数据'}
                       </Button>
                       <Button variant="warning" style={{border:'2px orange solid'}} 
