@@ -27,10 +27,10 @@ const defaultUser: User = {
   token: "",
   data: {
     id: 0,
-    username: "Not Found",
+    username: "",
     password: null,
-    emailAddress: "Not Found",
-    telephone: "Not Found",
+    emailAddress: "",
+    telephone: "",
     createTime: "",
     updateTime: ""
   }
@@ -60,7 +60,6 @@ export default () => {
     }
     setIsLoading(true);
     try {
-      // 调用API保存修改（替换为实际API地址）
       const response = await axios.put("", editedUser, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });

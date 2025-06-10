@@ -101,6 +101,9 @@ export const UserInfoProvider = ({ children }: { children: ReactNode }) => {
         console.log('设置用户信息:', value);
         setCookie('userInfo', JSON.stringify(value), 7); // 存储 7 天
         setUserInfoState(value);
+        if(data.username=='') {
+          deleteCookie('userInfo'); // 删除 cookie
+        }
       } catch (error) {
         console.error('保存到cookie失败:', error);
       }

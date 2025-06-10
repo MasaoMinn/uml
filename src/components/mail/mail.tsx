@@ -200,22 +200,14 @@ export default function MailComponent() {
     const sendMail = useCallback(async () => {
         setIsSending(true); 
         try {
-            const formData = new FormData();
-            formData.append('to', newMail.to);
-            formData.append('subject', newMail.subject);
-            formData.append('body', newMail.body);
-            newMail.attachments.forEach((attachment, index) => {
-                formData.append(`attachment_${index}`, attachment);
-            });
-
-            if (userInfo) {
-                formData.append('token', userInfo.token); // 添加 token
-            }
-
-            await axios.post('/api/mail/send', formData, {
+            await axios.post('http://localhost:8080/mail/send', {
                 headers: {
                     Authorization: userInfo?.token,
                     'Content-Type': 'multipart/form-data'
+                },
+                data:{
+                    mail: newMail,
+                    attachments: newMail.attachments
                 }
             });
             setSent(prev => [...prev, newMail]);
@@ -239,21 +231,13 @@ export default function MailComponent() {
     const saveDraft = useCallback(async () => {
         setIsSavingDraft(true); 
         try {
-            const formData = new FormData();
-            formData.append('to', newMail.to);
-            formData.append('subject', newMail.subject);
-            formData.append('body', newMail.body);
-            newMail.attachments.forEach((attachment, index) => {
-                formData.append(`attachment_${index}`, attachment);
-            });
-
-            if (userInfo) {
-                formData.append('token', userInfo.token); // 添加 token
-            }
-
-            await axios.post('/api/mail/save', formData, {
+            await axios.post('http://localhost:8080/mail/save', {
                 headers: {
+                    Authorization: userInfo?.token,
                     'Content-Type': 'multipart/form-data'
+                },data:{
+                    mail: newMail,
+                    attachments: newMail.attachments
                 }
             });
             setDrafts(prev => [...prev, newMail]);

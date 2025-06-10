@@ -127,6 +127,7 @@ export default function LoginSheet() {
       alert('Logout failed: ' + error);
     }).finally(() => {
       handleClose();
+      location.reload();
     });
   }
 
@@ -216,6 +217,7 @@ export default function LoginSheet() {
         </Offcanvas>
     )
   }
+  
 
   const Login = () => {
     return (
@@ -271,15 +273,17 @@ export default function LoginSheet() {
         </Offcanvas>
     )
   }
+  let stat:boolean = false;
   const Forget1 = () => {
-  const check1 = (b:boolean) => {
+  const check1 = () => {
     axios.post('localhost:8080/user/forgetps1',{
-      status : b? 0 : 1,
+      status : stat? 0 : 1,
       username: curuser.userName,
       emailAddress: curuser.emailAddress,
     }).then(response => {
       alert(response.data.message);
       if(response.data.code==0) {
+        curuser.phoneNumber = response.data.data;
         setStatus('forget2');
       }
     }).catch((err)=>{
@@ -306,7 +310,7 @@ export default function LoginSheet() {
                 className="border-primary"
                 onChange={(e)=>{curuser.userName=e.target.value}}
               />
-              <Button onClick={()=>{check1(true)}}>Check</Button>
+              <Button onClick={()=>{check1()}}>Check</Button>
             </InputGroup>
             <p className="text-center">OR</p>
             <InputGroup className="mb-3 w-50 mx-auto">
@@ -323,7 +327,7 @@ export default function LoginSheet() {
                 className="border-primary"
                 onChange={(e)=>{curuser.userName=e.target.value}}
               />
-              <Button onClick={()=>{check1(false)}}>Check</Button>
+              <Button onClick={()=>{check1();stat=true;}}>Check</Button>
             </InputGroup>
 
             <div className="d-flex justify-content-center gap-2">
@@ -338,7 +342,7 @@ export default function LoginSheet() {
   const Forget2 = () => {
     const [err, setErr] = useState('');
     const check2 = () => {
-      axios.get('http://localhost:8080/user/forgetps2', {
+      axios.get('http://localhost:8080/user/forgetps3', {
         params: {
           code: curuser.password,
           telephone: curuser.phoneNumber,
@@ -358,7 +362,19 @@ export default function LoginSheet() {
       });
     }
     const send  = () => {
-
+      axios.get('http://localhost:8080/user/sendCode',{
+        params: {
+          telephone: curuser.phoneNumber,
+        },
+      }).then((res)=>{
+        if(res.data.code==0) {
+          setErr(res.data.message);
+        }else {
+          setErr(res.data.message);
+        }
+      }).catch((err)=>{
+        setErr(err.message);
+      });
     }
     return (
       <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName}>
@@ -397,13 +413,37 @@ export default function LoginSheet() {
   }
   const Forget3 = () => {
     let passw:string='';
+    let passw2:string='';
     const [err, setErr] = useState('');
     const check3 = () => {
-      if(passw!=curuser.password) {
+      if(passw!=passw2) {
         setErr('Passwords do not match');
         return;
       }
-
+      axios.get('http://localhost:8080/user/forgetps4', {
+        params:{
+          status: stat? 0 : 1,
+          code: curuser.password,
+          telephone: curuser.phoneNumber,
+        },
+        data: {
+          username: curuser.userName,
+          emailAddress: curuser.emailAddress,
+          password: passw,
+        },
+        headers: {
+          'Content-Type': 'application/json', 
+        }
+      }).then((res)=>{
+        if(res.data.code==0) {
+          alert(res.data.message);
+          setStatus('login'); 
+        }else {
+          setErr(res.data.message);
+        }
+      }).catch((err)=>{
+        setErr(err.message);
+      });
     }
     return (
         <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName}>
