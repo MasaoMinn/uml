@@ -28,10 +28,13 @@ export default function LoginSheet() {
     emailAddress: '',
     phoneNumber:null,
   };
+  const [phonen,setPhonen]=useState('');
+  const [namen,setNamen] =useState('');
+  const [emaila,setEmaila] =useState('');
 
   const logout = () => {
     axios({
-      url: 'http://localhost:8080/user/deleteuser',
+      url: 'http://localhost:8080/user/logout',
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
@@ -173,6 +176,7 @@ const Login = () => {
     console.log("用户登录：",curuser);
     axios.post("http://localhost:8080/user/login", {
       username: curuser.userName,
+      emailAddress:curuser.userName,
       password: curuser.password
       }, {
         params: {
@@ -182,15 +186,20 @@ const Login = () => {
           'Content-Type': 'application/json'
       }
       }).then(response => {
+        if(response.data.code!=0) {
+          throw new Error(response.data.message);
+        }
         alert('Login successfully!');
+        console.log(response);
         // 假设响应中包含 token 和用户数据
-        const { token, data } = response.data;
+        const data=response.data.data,token=response.data.token;
+        console.log(data);
         setUserInfo(token, {
-          id: data.id || 0,
-          username: curuser.userName,
+          id: data.id,
+          username: data.username,
           password: curuser.password,
-          emailAddress: curuser.emailAddress,
-          telephone: curuser.phoneNumber || '',
+          emailAddress: data.emailAddress,
+          telephone: data.telephone || '',
           createTime: data.createTime || '',
           updateTime: data.updateTime || '',
         });
@@ -257,10 +266,12 @@ const Login = () => {
         </Offcanvas>
     )
   }
-  let stat:boolean = false;
+  const [stat,setStat]=useState(false);
+
   const Forget1 = () => {
   const check1 = () => {
-    axios.post('localhost:8080/user/forgetps1',{
+    
+    axios.post('http://localhost:8080/user/forgetps1',{
       username: curuser.userName,
       emailAddress: curuser.emailAddress,
     },{
@@ -273,7 +284,9 @@ const Login = () => {
     }).then(response => {
       alert(response.data.message);
       if(response.data.code==0) {
-        curuser.phoneNumber = response.data.data;
+        setPhonen(response.data.data);
+        setNamen(curuser.userName);
+        setEmaila(curuser.emailAddress);
         setStatus('forget2');
       }
     }).catch((err)=>{
@@ -317,7 +330,7 @@ const Login = () => {
                 className="border-primary"
                 onChange={(e)=>{curuser.userName=e.target.value}}
               />
-              <Button onClick={()=>{check1();stat=true;}}>Check</Button>
+              <Button onClick={()=>{check1();setStat(true)}}>Check</Button>
             </InputGroup>
 
             <div className="d-flex justify-content-center gap-2">
@@ -329,11 +342,14 @@ const Login = () => {
         </Offcanvas>
     )
   }
+  const [capcha,setCapcha]=useState<string|null>('');
   const Forget2 = () => {
     const [err, setErr] = useState('');
     const check2 = () => {
+      console.log(curuser.password);
+      setCapcha(curuser.password);
       axios.post('http://localhost:8080/user/forgetps3', {
-          telephone: curuser.phoneNumber,
+          telephone: phonen,
         },{
         headers: {
           'Content-Type': 'application/json',
@@ -353,11 +369,13 @@ const Login = () => {
       });
     }
     const send  = () => {
+      console.log(':'+phonen);
       axios.get('http://localhost:8080/user/sendCode',{
-        params: {
-          telephone: curuser.phoneNumber,
-        },
+      params: {
+        phone: phonen,
+      }
       }).then((res)=>{
+        console.log(res);
         if(res.data.code==0) {
           setErr(res.data.message);
         }else {
@@ -387,7 +405,7 @@ const Login = () => {
                 className="border-primary"
                 onChange={(e)=>{curuser.password=e.target.value}}
               />
-              <Button onClick={()=>{send}}>Get</Button>
+              <Button onClick={send}>Get</Button>
             </InputGroup>
             <div className="d-flex justify-content-center gap-2">
               <Button variant={theme} type="button" className="w-40" onClick={() => setStatus('login')}>
@@ -403,24 +421,24 @@ const Login = () => {
     )
   }
   const Forget3 = () => {
-    let passw:string='';
-    let passw2:string='';
+    const [passw,setPassw] =useState('');
+    const [passw2,setPassw2] =useState('');
     const [err, setErr] = useState('');
     const check3 = () => {
       if(passw!=passw2) {
         setErr('Passwords do not match');
         return;
       }
-      axios.get('http://localhost:8080/user/forgetps4', {
+      console.log(namen+emaila+passw+capcha+phonen+stat)
+      axios.post('http://localhost:8080/user/forgetps4', {
+        username: namen,
+        emailAddress: emaila,
+        password: passw,
+      },{
         params:{
-          status: stat? 0 : 1,
-          code: curuser.password,
-          telephone: curuser.phoneNumber,
-        },
-        data: {
-          username: curuser.userName,
-          emailAddress: curuser.emailAddress,
-          password: passw,
+          status: stat? 1 : 0,
+          code: capcha,
+          telephone: phonen,
         },
         headers: {
           'Content-Type': 'application/json', 
@@ -454,7 +472,7 @@ const Login = () => {
                 aria-label="Default"
                 aria-describedby="inputGroup-sizing-default"
                 className="border-primary"
-                onChange={(e)=>{curuser.password=e.target.value}}
+                onChange={(e)=>{setPassw(e.target.value)}}
               />
             </InputGroup>
               <InputGroup className="mb-3 w-50 mx-auto">
@@ -469,7 +487,7 @@ const Login = () => {
                 aria-label="Default"
                 aria-describedby="inputGroup-sizing-default"
                 className="border-primary"
-                onChange={(e)=>{passw=e.target.value}}
+                onChange={(e)=>{setPassw2(e.target.value)}}
               />
             </InputGroup>
             <div className="d-flex justify-content-center gap-2">
