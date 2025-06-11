@@ -28,79 +28,6 @@ export default function LoginSheet() {
     emailAddress: '',
     phoneNumber:null,
   };
-  const register = () => {
-    console.log("用户注册：",curuser);
-    axios.post('http://localhost:8080/user/register', {
-      username: curuser.userName,
-      password: curuser.password,
-      emailAddress: curuser.emailAddress,
-      telephone: curuser.phoneNumber
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    }).then(response => {
-      alert(response.data.message);
-    }).catch(error => {
-      alert(error);
-    }).finally(() => {
-      handleClose();
-    });
-  }
-  const login =() => {
-    console.log("用户登录：",curuser);
-    axios.post("http://localhost:8080/user/login?status=0", {
-      username: curuser.userName,
-      password: curuser.password
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-      }
-      }).then(response => {
-        alert('Login successfully!');
-        // 假设响应中包含 token 和用户数据
-        const { token, data } = response.data;
-        setUserInfo(token, {
-          id: data.id || 0,
-          username: curuser.userName,
-          password: curuser.password,
-          emailAddress: curuser.emailAddress,
-          telephone: curuser.phoneNumber || '',
-          createTime: data.createTime || '',
-          updateTime: data.updateTime || '',
-        });
-    }).catch(error => {
-        alert(error);
-        axios.post('http://localhost:8080/user/login', {
-          emailAddress: curuser.userName,
-          password: curuser.password
-        },{
-          headers:{
-            'Content-Type': 'application/json'
-          },
-          params:{
-            status: 1
-          }
-        }).then(response => {
-            alert('Login successfully!');
-            const { token, data } = response.data;
-            setUserInfo(token, {
-              id: data.id || 0,
-              username: curuser.userName,
-              password: curuser.password,
-              emailAddress: curuser.emailAddress,
-              telephone: curuser.phoneNumber || '',
-              createTime: data.createTime || '',
-              updateTime: data.updateTime || '',
-            });
-            handleClose();
-        }).catch(error => {
-          alert(error);
-        });
-    }).finally(()=> {
-      handleClose();
-    });
-  }
 
   const logout = () => {
     axios({
@@ -133,7 +60,26 @@ export default function LoginSheet() {
     });
   }
 
-  const Register = () => {
+const Register = () => {
+  const register = () => {
+    console.log("用户注册：",curuser);
+    axios.post('http://localhost:8080/user/register', {
+      username: curuser.userName,
+      password: curuser.password,
+      emailAddress: curuser.emailAddress,
+      telephone: curuser.phoneNumber
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    }).then(response => {
+      alert(response.data.message);
+    }).catch(error => {
+      alert(error);
+    }).finally(() => {
+      handleClose();
+    });
+  }
     return (
         <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName} style={{height: 'auto'}} fluid>
           <Offcanvas.Header closeButton>
@@ -221,20 +167,51 @@ export default function LoginSheet() {
   }
   
 
-  const Login = () => {
+const Login = () => {
+  const [namae, setNamae] = useState<boolean>(true);
+  const login =() => {
+    console.log("用户登录：",curuser);
+    axios.post("http://localhost:8080/user/login", {
+      username: curuser.userName,
+      password: curuser.password
+      }, {
+        params: {
+          status: namae?0:1
+        },
+        headers: {
+          'Content-Type': 'application/json'
+      }
+      }).then(response => {
+        alert('Login successfully!');
+        // 假设响应中包含 token 和用户数据
+        const { token, data } = response.data;
+        setUserInfo(token, {
+          id: data.id || 0,
+          username: curuser.userName,
+          password: curuser.password,
+          emailAddress: curuser.emailAddress,
+          telephone: curuser.phoneNumber || '',
+          createTime: data.createTime || '',
+          updateTime: data.updateTime || '',
+        });
+    }).catch(error => {
+        alert(error);
+    }).finally(()=> {
+      handleClose();
+    });
+  }
     return (
           <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName}>
           <Offcanvas.Header closeButton>
             <Offcanvas.Title className='mx-auto'>Login/Register</Offcanvas.Title>
           </Offcanvas.Header>
           <Offcanvas.Body>
-              {/* 设置 InputGroup 宽度并水平居中 */}
               <InputGroup className="mb-3 w-50 mx-auto">
               <InputGroup.Text 
                 id="inputGroup-sizing-default"
                 className="bg-primary text-white border-primary"
               >
-                User name or Email address
+                {namae?'User Name':'Email Address'}
               </InputGroup.Text>
               <Form.Control
                 placeholder=''
@@ -244,6 +221,10 @@ export default function LoginSheet() {
                 // 使用优化后的函数
                 onChange={(e)=>{curuser.userName=e.target.value}}
               />
+              {!namae&&<InputGroup.Text id="basic-addon2"
+                className="bg-primary text-white border-primary w-30 text-center">
+                @Hgmail.com
+              </InputGroup.Text>}
             </InputGroup>
             <InputGroup className="mb-3 w-50 mx-auto">
               <InputGroup.Text 
@@ -270,6 +251,7 @@ export default function LoginSheet() {
               <Button variant="link" type="button" className="w-20 text-primary" onClick={() => setStatus('forget1')}>
                 Forgot?
               </Button>
+              <Button variant='warning' onClick={()=>{setNamae(!namae);}}>use {namae?'Email Address':'UserName'} to login</Button>
             </div>
           </Offcanvas.Body>
         </Offcanvas>
