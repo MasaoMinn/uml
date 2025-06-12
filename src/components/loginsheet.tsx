@@ -64,7 +64,49 @@ export default function LoginSheet() {
   }
 
 const Register = () => {
+    const [err, setErr] = useState('');
+    const send  = () => {
+      console.log(':'+curuser.phoneNumber);
+      axios.get('http://localhost:8080/user/sendCode',{
+      params: {
+        phone: curuser.phoneNumber ,
+      }
+      }).then((res)=>{
+        console.log(res);
+        if(res.data.code==0) {
+          setErr(res.data.message);
+        }else {
+          setErr(res.data.message);
+        }
+      }).catch((err)=>{
+        setErr(err.message);
+      });
+    }
   const register = () => {
+      console.log(curuser);
+      setCapcha(curuser.password);
+      axios.post('http://localhost:8080/user/forgetps3', {
+          telephone: curuser.phoneNumber,
+        },{
+        headers: {
+          'Content-Type': 'application/json',
+        }
+        ,params:{
+          code: curuser.password,
+        }
+      }).then(response => {
+        alert(response.data.message);
+        if(response.data.code==0) {
+          setStatus('forget3');
+          return true;
+        }else {
+          setErr(response.data.message);
+        }
+      }).catch((err)=>{
+        setErr(err.message);
+      }).finally(()=>{
+        return false;
+      })
     console.log("用户注册：",curuser);
     axios.post('http://localhost:8080/user/register', {
       username: curuser.userName,
@@ -152,7 +194,23 @@ const Register = () => {
                 aria-describedby="basic-addon2"
                 className="border-primary"
                 type="number"
-                // 使用优化后的函数
+                onChange={(e)=>{curuser.phoneNumber=e.target.value}}
+              />
+              <Button variant='primary' onClick={send}>Check</Button>
+            </InputGroup>
+            <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary w-30 text-center"
+              >
+                Code
+              </InputGroup.Text>
+              <Form.Control
+                placeholder="phone number"
+                aria-label="Recipient's username"
+                aria-describedby="basic-addon2"
+                className="border-primary"
+                type="string"
                 onChange={(e)=>{curuser.phoneNumber=e.target.value}}
               />
             </InputGroup>

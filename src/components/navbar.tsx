@@ -5,11 +5,25 @@ import Navbar from 'react-bootstrap/Navbar';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import LoginSheet from './loginsheet';
 import { useTheme } from '@/context/theme';
+import { useUserInfo } from '@/context/user';
+import axios from 'axios';
 
 function BasicExample() {
   const { theme,toggleTheme } = useTheme();
+  const { userInfo } = useUserInfo();
   const navbarClassName = theme === 'dark' ? 'bg-dark navbar-dark' : 'bg-light navbar-light';
-
+  const deleteuser = ()=> {
+    axios.post('http://localhost:8080/user/deleteuser',{
+    },{
+      headers: {
+        Authorization: userInfo?.token
+      }
+    }).then((res)=>{
+      alert(res.data.message);
+    }).catch((err)=>{
+      alert(err.response.data.message);
+    });
+  }
   return (
     <Navbar expand="lg" className={`align-items-center ${navbarClassName}`}>
       <Container>
@@ -21,7 +35,8 @@ function BasicExample() {
           <Nav className="align-items-center">
             <Nav.Link><LoginSheet /></Nav.Link>
             <NavDropdown title="Dropdown" id="basic-nav-dropdown">
-              <NavDropdown.Item onClick={toggleTheme}>switch theme</NavDropdown.Item>
+              <NavDropdown.Item onClick={toggleTheme} className='text-center'>switch theme</NavDropdown.Item>
+              {userInfo?.token&&<NavDropdown.Item><Button onClick={deleteuser} variant='danger'>delete account</Button></NavDropdown.Item>}
               <NavDropdown.Divider />
               <NavDropdown.Item href="./">
                 See us on Github

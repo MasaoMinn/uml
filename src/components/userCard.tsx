@@ -40,11 +40,12 @@ export default () => {
   const { userInfo, setUserInfo } = useUserInfo();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // 新增编辑相关状态
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<UserData>(userInfo?.data || defaultUser.data);
-
-  // 新增编辑处理函数
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const handleEdit = () => setIsEditing(true);
   
   const handleCancel = () => {
@@ -58,12 +59,74 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    
+    await axios.post('http://localhost:8080/user/changename',{
+      username: editedUser.username,
+    },{
+      headers: {
+        Authorization: userInfo.token
+      }
+    }).then((res)=>{
+      if(res.data.code === 0) {
+        alert('更新成功');
+        setUserInfo(userInfo.token,editedUser);
+        setIsEditing(false);
+      } else {
+        alert(res.data.message);
+      }
+    }).catch((err)=>{
+      alert(err.message);
+    }).finally(()=>{
+      setIsLoading(false);
+    });
+  };
+
+  // 新增修改密码处理函数
+  const handleChangePassword = () => setIsChangingPassword(true);
+
+  const handleCancelChangePassword = () => {
+    setIsChangingPassword(false);
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleSavePassword = async () => {
+    if (!userInfo) {
+      setError('用户信息未找到');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert('两次输入的新密码不一致');
+      return;
+    }
+    setIsLoading(true);
+    await axios.post('http://localhost:8080/user/changepswd',{
+      password: newPassword
+    },{
+      headers: {
+        Authorization: userInfo.token,
+        'Content-Type': 'application/json'
+      }
+    }).then((res)=>{
+      if(res.data.code === 0) {
+        alert('密码修改成功');
+        setIsChangingPassword(false);
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        alert(res.data.message);
+      }
+    }).catch((err)=>{
+      alert(err.message);
+    }).finally(()=>{
+      setIsLoading(false);
+    });
   };
 
   return (
     <Card style={{ 
-      width: isEditing ? '35vw' : 'fit-content',
+      width: isEditing || isChangingPassword ? '35vw' : 'fit-content',
       maxWidth: '90vw',
       minWidth: '20vw',        // 可选：设置最小宽度避免收缩过小
       height: 'auto',
@@ -86,8 +149,48 @@ export default () => {
           <Row>
             <Col>
               <Card.Body>
-                {isEditing ? (
-                  // 编辑状态表单
+                {isChangingPassword ? (
+                  <div>
+                    <Row className="mb-2">
+                      <Col sm="3" className="fw-bold">旧密码</Col>
+                      <Col sm="9">
+                        <Form.Control
+                          type="password"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                        />
+                      </Col>
+                    </Row>
+                    <Row className="mb-2">
+                      <Col sm="3" className="fw-bold">新密码</Col>
+                      <Col sm="9">
+                        <Form.Control
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                      </Col>
+                    </Row>
+                    <Row className="mb-2">
+                      <Col sm="3" className="fw-bold">确认新密码</Col>
+                      <Col sm="9">
+                        <Form.Control
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                      </Col>
+                    </Row>
+                    <div className="d-flex gap-2 mt-3">
+                      <Button variant="primary" onClick={handleSavePassword} disabled={isLoading}>
+                        {isLoading ? '保存中...' : '保存'}
+                      </Button>
+                      <Button variant="secondary" onClick={handleCancelChangePassword}>
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                ) : isEditing ? (
                   <div>
                     <Row className="mb-2">
                       <Col sm="3" className="fw-bold">Name</Col>
@@ -98,30 +201,6 @@ export default () => {
                         />
                       </Col>
                     </Row>
-                    <Form.Group as={Row} className="mb-3">
-                      <Form.Label column sm="3">
-                        Email Address
-                      </Form.Label>
-                      <Col sm="9">
-                        <Form.Control
-                          type="email"
-                          value={editedUser.emailAddress}
-                          onChange={(e) => setEditedUser({ ...editedUser, emailAddress: e.target.value })}
-                        />
-                      </Col>
-                    </Form.Group>
-                    <Form.Group as={Row} className="mb-3">
-                      <Form.Label column sm="3">
-                        Tel
-                      </Form.Label>
-                      <Col sm="9">
-                        <Form.Control
-                          type="tel"
-                          value={editedUser.telephone}
-                          onChange={(e) => setEditedUser({ ...editedUser, telephone: e.target.value })}
-                        />
-                      </Col>
-                    </Form.Group>
                     <div className="d-flex gap-2 mt-3">
                       <Button variant="primary" onClick={handleSave} disabled={isLoading}>
                         {isLoading ? '保存中...' : '保存'}
@@ -132,10 +211,8 @@ export default () => {
                     </div>
                   </div>
                 ) : (
-                  // 非编辑状态显示
                   <div>
                     <Card.Text style={{whiteSpace:'nowrap'}}>
-                      {/* 显示用户信息 */}
                       {userInfo?.data && (
                         <>
                           <p>用户名: {userInfo.data.username}</p>
@@ -147,13 +224,17 @@ export default () => {
                       )}
                     </Card.Text>
                     <div className="d-flex gap-2">
-                      <Button variant={`${useTheme().theme}`} style={{border:'2px skyblue solid'}} 
+                      <Button href='./' variant={`${useTheme().theme}`} style={{border:'2px skyblue solid'}} 
                          disabled={isLoading}>
                         {isLoading ? '更新中...' : '刷新数据'}
                       </Button>
                       <Button variant="warning" style={{border:'2px orange solid'}} 
                         onClick={handleEdit} disabled={isLoading}>
-                        编辑信息
+                        修改用户名
+                      </Button>
+                      <Button variant="danger" style={{border:'2px red solid'}} 
+                        onClick={handleChangePassword} disabled={isLoading}>
+                        修改密码
                       </Button>
                     </div>
                   </div>
