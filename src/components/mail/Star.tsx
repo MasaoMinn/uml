@@ -266,7 +266,6 @@ const Star = () => {
   return (
     <StarContainer>
       <h2>收藏邮件</h2>
-      {/* 根据选中邮件数量显示按钮 */}
       {selectedMails.length > 0 && (
         <div className="mb-3">
           <Button variant="danger" onClick={handleDelete}>Delete</Button>
@@ -288,16 +287,18 @@ const Star = () => {
                     onClick={() => fetchMailDetail(mail.id)}
                     isread={mail.isread === 1}
                   >
-                    {/* 新增：多选框 */}
+                    {/* 应用 Inbox 多选框样式 */}
                     <Form.Check
                       type="checkbox"
                       checked={selectedMails.includes(mail.id)}
                       onChange={() => handleCheckboxChange(mail.id)}
                       className="me-2"
                     />
-                    <h5>{mail.theme}</h5>
-                    <div>发送时间: {mail.sendTime}</div>
-                    <div>内容摘要: {mail.content.substring(0, 50)}...</div>
+                    <div onClick={() => fetchMailDetail(mail.id)}>
+                      <h5>{mail.theme}</h5>
+                      <div>发送时间: {mail.sendTime}</div>
+                      <div>内容摘要: {mail.content.substring(0, 50)}...</div>
+                    </div>
                   </MailListItem>
                 ))}
               </ListGroup>

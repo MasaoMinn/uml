@@ -123,7 +123,7 @@ const Write = () => {
                 formData.append(`attachments[${index}]`, file);
             });
             console.log(mail.content+mail.targetemailaddress+mail.theme);
-            console.log(attachments);
+            console.log(formData.get('attachments[0]'));
             await axios.post('http://localhost:8080/mail/send', formData, {
                 headers: {
                     Authorization: userInfo?.token,
@@ -210,6 +210,14 @@ const Write = () => {
                 <MailButton onClick={saveDraft} disabled={isSavingDraft}>
                 {isSavingDraft ? '保存中...' : 'Save Draft'}
                 </MailButton>
+                {/* 添加隐藏的文件输入元素 */}
+                <input
+                    type="file"
+                    id="attachment-input"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={handleAttachmentChange}
+                />
                 <MailButton as="label" htmlFor="attachment-input">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-file-earmark-plus" viewBox="0 0 16 16">
                     <path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5z"/>

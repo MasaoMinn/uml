@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUserInfo } from '@/context/user';
 import axios from 'axios';
-import { ListGroup, Card, Button, Pagination } from 'react-bootstrap';
+import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
 
 // 定义草稿邮件项类型
@@ -67,6 +67,7 @@ const Drafts = () => {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增选中邮件 ID 数组
 
   // 获取草稿邮件列表
   const fetchDraftMails = useCallback(async (p: number) => {
@@ -138,9 +139,46 @@ const Drafts = () => {
 
   const pageNumbers = getPageNumbers();
 
+  // 处理多选框变化
+  const handleCheckboxChange = (mailId: number) => {
+    if (selectedMails.includes(mailId)) {
+      setSelectedMails(selectedMails.filter(id => id !== mailId));
+    } else {
+      setSelectedMails([...selectedMails, mailId]);
+    }
+  };
+
+  // 删除选中邮件
+  const handleDelete = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/delete', {
+        id: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchDraftMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('删除邮件失败');
+      }
+    }
+  };
+
   return (
     <DraftsContainer>
       <h2>草稿箱</h2>
+      {selectedMails.length > 0 && (
+        <div className="mb-3">
+          <Button variant="danger" onClick={handleDelete}>Delete</Button>
+        </div>
+      )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && (
@@ -153,11 +191,19 @@ const Drafts = () => {
                 {draftMails.map((mail) => (
                   <MailListItem
                     key={mail.id}
-                    onClick={() => setSelectedMailDetail(mail)}
                   >
-                    <h5>{mail.theme}</h5>
-                    <div>保存时间: {mail.saveTime}</div>
-                    <div>内容摘要: {mail.content.substring(0, 50)}...</div>
+                    {/* 应用 Inbox 多选框样式 */}
+                    <Form.Check
+                      type="checkbox"
+                      checked={selectedMails.includes(mail.id)}
+                      onChange={() => handleCheckboxChange(mail.id)}
+                      className="me-2"
+                    />
+                    <div onClick={() => setSelectedMailDetail(mail)}>
+                      <h5>{mail.theme}</h5>
+                      <div>保存时间: {mail.saveTime}</div>
+                      <div>内容摘要: {mail.content.substring(0, 50)}...</div>
+                    </div>
                   </MailListItem>
                 ))}
               </ListGroup>
