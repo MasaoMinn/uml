@@ -206,7 +206,7 @@ const Inbox = () => {
     if (selectedMails.length === 0) return;
     try {
       await axios.post('http://localhost:8080/mail/delete', {
-        mailIds: selectedMails
+        id: selectedMails
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -229,7 +229,7 @@ const Inbox = () => {
     if (selectedMails.length === 0) return;
     try {
       await axios.post('http://localhost:8080/mail/star', {
-        mailIds: selectedMails
+        id: selectedMails
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -292,7 +292,7 @@ const Inbox = () => {
                 {inboxMails.map((mail) => (
                   <MailListItem  style={theme==='dark'?darkTheme:lightTheme}
                     key={mail.id}
-                    onClick={() => fetchMailDetail(mail.id)}
+                    
                     isread={mail.isread === 1}
                   >
                     <Form.Check
@@ -301,21 +301,21 @@ const Inbox = () => {
                       onChange={() => handleCheckboxChange(mail.id)}
                       className="me-2"
                     />
-                    <h5>{mail.theme}</h5>
-                    <div>发送时间: {mail.sendTime}</div>
-                    <div>内容摘要: {mail.content.substring(0, 50)}...</div>
+                    <div onClick={() => fetchMailDetail(mail.id)}>
+                      <h5>{mail.theme}</h5>
+                      <div>发送时间: {mail.sendTime}</div>
+                      <div>内容摘要: {mail.content.substring(0, 50)}...</div>
+                    </div>
                   </MailListItem>
                 ))}
               </ListGroup>
               {totalPages > 1 && (
                 <Pagination className="mt-3">
-                  {/* 跳转至第一页 */}
                   <Pagination.First onClick={() => handlePageChange(1)} />
                   <Pagination.Prev
                     disabled={currentPage === 1}
                     onClick={() => handlePageChange(currentPage - 1)}
                   />
-                  {/* 显示省略号，当当前页不是第一页且起始页码大于 1 时 */}
                   {pageNumbers[0] > 1 && <Pagination.Ellipsis disabled />}
                   {pageNumbers.map((page) => (
                     <Pagination.Item
@@ -326,13 +326,11 @@ const Inbox = () => {
                       {page}
                     </Pagination.Item>
                   ))}
-                  {/* 显示省略号，当当前页不是最后一页且结束页码小于总页数时 */}
                   {pageNumbers[pageNumbers.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
                   <Pagination.Next
                     disabled={currentPage === totalPages}
                     onClick={() => handlePageChange(currentPage + 1)}
                   />
-                  {/* 跳转至最后一页 */}
                   <Pagination.Last onClick={() => handlePageChange(totalPages)} />
                 </Pagination>
               )}
