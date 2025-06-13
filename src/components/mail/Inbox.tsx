@@ -2,9 +2,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUserInfo } from '@/context/user';
 import axios from 'axios';
-import { ListGroup, Card, Button, Pagination } from 'react-bootstrap';
+import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useTheme,darkTheme,lightTheme } from '@/context/theme';
+import Star from './Star';
 
 // 定义收件箱邮件项类型
 type InboxMailItem = {
@@ -105,6 +106,7 @@ const Inbox = () => {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增：选中的邮件 ID 数组
 
   // 获取收件箱邮件列表
   const fetchInboxMails = useCallback(async (p: number) => {
@@ -146,12 +148,13 @@ const Inbox = () => {
   // 获取邮件详细信息
   const fetchMailDetail = useCallback(async (mailId: number) => {
     console.log('Fetching mail detail for ID:', mailId);
+    console.log('Request URL:', `http://localhost:8080/mail/detail?id=${mailId}`); // 打印请求 URL
     if (!userInfo ) {
       setError('用户信息未找到');
       return;
     }
     try {
-      const response = await axios.get<MailDetail>(`/api/mail`, {
+      const response = await axios.get<MailDetail>(`http://localhost:8080/mail/detail`, {
         params: {
           id: mailId
         },
@@ -167,6 +170,7 @@ const Inbox = () => {
       }
     } catch (err) {
       if (err instanceof Error) {
+        console.error('Error details:', err); // 打印错误详情
         setError(err.message);
       } else {
         setError('获取邮件详细信息失败');
@@ -187,6 +191,61 @@ const Inbox = () => {
   useEffect(() => {
     fetchInboxMails(currentPage);
   }, [fetchInboxMails, currentPage]);
+
+  // 处理多选框变化
+  const handleCheckboxChange = (mailId: number) => {
+    if (selectedMails.includes(mailId)) {
+      setSelectedMails(selectedMails.filter(id => id !== mailId));
+    } else {
+      setSelectedMails([...selectedMails, mailId]);
+    }
+  };
+
+  // 删除选中邮件
+  const handleDelete = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/delete', {
+        mailIds: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchInboxMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('删除邮件失败');
+      }
+    }
+  };
+
+  // 收藏选中邮件
+  const handleStar = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/star', {
+        mailIds: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchInboxMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('收藏邮件失败');
+      }
+    }
+  };
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -211,8 +270,16 @@ const Inbox = () => {
   const {theme} = useTheme();
 
   return (
+    <>
+    <Star />
     <InboxContainer style={theme==='dark'?darkTheme:lightTheme}>
       <h2>收件箱</h2>
+      {selectedMails.length > 0 && (
+        <div className="mb-3">
+          <Button variant="danger" onClick={handleDelete}>Delete</Button>
+          <Button variant="warning" className="ms-2" onClick={handleStar}>Star</Button>
+        </div>
+      )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && (
@@ -228,6 +295,12 @@ const Inbox = () => {
                     onClick={() => fetchMailDetail(mail.id)}
                     isread={mail.isread === 1}
                   >
+                    <Form.Check
+                      type="checkbox"
+                      checked={selectedMails.includes(mail.id)}
+                      onChange={() => handleCheckboxChange(mail.id)}
+                      className="me-2"
+                    />
                     <h5>{mail.theme}</h5>
                     <div>发送时间: {mail.sendTime}</div>
                     <div>内容摘要: {mail.content.substring(0, 50)}...</div>
@@ -297,6 +370,7 @@ const Inbox = () => {
         </MailDetailCard>
       )}
     </InboxContainer>
+    </>
   );
 };
 

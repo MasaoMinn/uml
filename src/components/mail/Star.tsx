@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUserInfo } from '@/context/user';
 import axios from 'axios';
-import { ListGroup, Card, Button, Pagination } from 'react-bootstrap';
+import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
 
 // 定义收藏邮件项类型
@@ -106,6 +106,7 @@ const Star = () => {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增：选中的邮件 ID 数组
 
   // 获取收藏邮件列表
   const fetchStarMails = useCallback(async (p: number) => {
@@ -205,11 +206,73 @@ const Star = () => {
     return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
   };
 
+  // 处理多选框变化
+  const handleCheckboxChange = (mailId: number) => {
+    if (selectedMails.includes(mailId)) {
+      setSelectedMails(selectedMails.filter(id => id !== mailId));
+    } else {
+      setSelectedMails([...selectedMails, mailId]);
+    }
+  };
+
+  // 删除选中邮件
+  const handleDelete = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/delete', {
+        mailIds: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchStarMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('删除邮件失败');
+      }
+    }
+  };
+
+  // 取消收藏选中邮件
+  const handleUnstar = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/unstar', {
+        mailIds: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchStarMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('取消收藏邮件失败');
+      }
+    }
+  };
+
   const pageNumbers = getPageNumbers();
 
   return (
     <StarContainer>
       <h2>收藏邮件</h2>
+      {/* 根据选中邮件数量显示按钮 */}
+      {selectedMails.length > 0 && (
+        <div className="mb-3">
+          <Button variant="danger" onClick={handleDelete}>Delete</Button>
+          <Button variant="warning" className="ms-2" onClick={handleUnstar}>Unstar</Button>
+        </div>
+      )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && (
@@ -225,6 +288,13 @@ const Star = () => {
                     onClick={() => fetchMailDetail(mail.id)}
                     isread={mail.isread === 1}
                   >
+                    {/* 新增：多选框 */}
+                    <Form.Check
+                      type="checkbox"
+                      checked={selectedMails.includes(mail.id)}
+                      onChange={() => handleCheckboxChange(mail.id)}
+                      className="me-2"
+                    />
                     <h5>{mail.theme}</h5>
                     <div>发送时间: {mail.sendTime}</div>
                     <div>内容摘要: {mail.content.substring(0, 50)}...</div>

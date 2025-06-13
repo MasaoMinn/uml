@@ -6,7 +6,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import { Col, Container, Form, Row } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useUserInfo } from '@/context/user';
-import { useTheme } from '@/context/theme';
+import { darkTheme, lightTheme, useTheme } from '@/context/theme';
 
 interface UserData {
   id: number;
@@ -123,8 +123,9 @@ export default () => {
       setIsLoading(false);
     });
   };
-
+  const { theme } = useTheme();
   return (
+    <div style={theme==='light'?lightTheme:darkTheme}>
     <Card style={{ 
       width: isEditing || isChangingPassword ? '35vw' : 'fit-content',
       maxWidth: '90vw',
@@ -134,8 +135,12 @@ export default () => {
       margin: '0 auto',
       marginTop: '3vw',
       display: 'block',        // （覆盖之前的 inline-block）
-      boxSizing: 'border-box'     // 正确计算宽度
-    }}>
+      boxSizing: 'border-box',     // 正确计算宽度
+      borderRadius: '10px',
+      border: '2px solid rgb(0, 128, 255)',
+      boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
+    }
+    }>
       {isLoading && <div className="text-center p-3"><Spinner animation="border" /></div>}
       
       {error && (
@@ -145,7 +150,7 @@ export default () => {
       )}
 
       {userInfo?.data && (
-        <Container>
+        <Container style={theme==='light'?lightTheme:darkTheme}>
           <Row>
             <Col>
               <Card.Body>
@@ -245,5 +250,6 @@ export default () => {
         </Container>
       )}
     </Card>
+    </div>
   );
 };

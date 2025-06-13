@@ -111,17 +111,14 @@ const Write = () => {
     // 发送邮件
     const sendMail = useCallback(async () => {
         setIsSending(true);
-        
         try {
-            // 创建FormData处理文件上传
             const formData = new FormData();
             formData.append('mail', JSON.stringify(mail));
-            
-            // 添加附件
             attachments.forEach((file, index) => {
                 formData.append(`attachments[${index}]`, file);
             });
-            console.log(JSON.stringify(mail));
+            console.log(mail.content+mail.targetemailaddress+mail.theme);
+            console.log(attachments);
             await axios.post('http://localhost:8080/mail/send', formData, {
                 headers: {
                     Authorization: userInfo?.token,
