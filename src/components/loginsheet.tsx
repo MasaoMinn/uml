@@ -64,6 +64,7 @@ export default function LoginSheet() {
   }
 
 const Register = () => {
+    let capcha='';
     const [err, setErr] = useState('');
     const send  = () => {
       console.log(':'+curuser.phoneNumber);
@@ -84,36 +85,16 @@ const Register = () => {
     }
   const register = () => {
       console.log(curuser);
-      setCapcha(curuser.password);
-      axios.post('http://localhost:8080/user/forgetps3', {
-          telephone: curuser.phoneNumber,
-        },{
-        headers: {
-          'Content-Type': 'application/json',
-        }
-        ,params:{
-          code: curuser.password,
-        }
-      }).then(response => {
-        alert(response.data.message);
-        if(response.data.code==0) {
-          setStatus('forget3');
-          return true;
-        }else {
-          setErr(response.data.message);
-        }
-      }).catch((err)=>{
-        setErr(err.message);
-      }).finally(()=>{
-        return false;
-      })
     console.log("用户注册：",curuser);
     axios.post('http://localhost:8080/user/register', {
       username: curuser.userName,
       password: curuser.password,
-      emailAddress: curuser.emailAddress,
+      emailAddress: curuser.emailAddress+'@Hgmail.com',
       telephone: curuser.phoneNumber
     }, {
+      params:{
+        code:capcha,
+      },
       headers: {
         'Content-Type': 'application/json'
       },
@@ -122,7 +103,7 @@ const Register = () => {
     }).catch(error => {
       alert(error);
     }).finally(() => {
-      handleClose();
+      setStatus('login');
     });
   }
     return (
@@ -211,7 +192,7 @@ const Register = () => {
                 aria-describedby="basic-addon2"
                 className="border-primary"
                 type="string"
-                onChange={(e)=>{curuser.phoneNumber=e.target.value}}
+                onChange={(e)=>{capcha=e.target.value}}
               />
             </InputGroup>
             <div className="d-flex justify-content-center gap-2">
@@ -234,7 +215,7 @@ const Login = () => {
     console.log("用户登录：",curuser);
     axios.post("http://localhost:8080/user/login", {
       username: curuser.userName,
-      emailAddress:curuser.userName,
+      emailAddress:curuser.userName+'@Hgmail.com',
       password: curuser.password
       }, {
         params: {

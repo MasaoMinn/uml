@@ -81,8 +81,8 @@ const Sent = () => {
     try {
       const response = await axios.post<SentResponse>('http://localhost:8080/mail/view', {
         type:2,
-        page: p,
-        size: pageSize,
+        pagenumber: p,
+        pagesize: pageSize,
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -90,6 +90,7 @@ const Sent = () => {
         }
       });
       if (response.data.code === 0) {
+        console.log(response.data.data);
         setSentMails(response.data.data.records);
         setTotal(response.data.data.total);
       } else {

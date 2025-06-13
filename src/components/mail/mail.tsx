@@ -14,7 +14,7 @@ import Write from './Write';
 export default function MailComponent() {
     const { theme } = useTheme();
     const { userInfo } = useUserInfo(); // 获取用户信息
-    const [status, setStatus] = useState<'write'|'inbox'|'sent'|'drafts'|'folded'>('inbox');
+    const [status, setStatus] = useState<'write'|'inbox'|'sent'|'drafts'|'folded'|'star'>('inbox');
 
     return (
         <Container className="" fluid>
@@ -51,6 +51,12 @@ export default function MailComponent() {
                                 className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'write' ? 'active' : ''}`}
                             >
                                 Write
+                            </div>
+                            <div
+                                onClick={() => setStatus('star')}
+                                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'star' ? 'active' : ''}`}
+                            >
+                                Star
                             </div>
                         </Col>
                     </Row>

@@ -6,6 +6,7 @@ import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useTheme,darkTheme,lightTheme } from '@/context/theme';
 import Star from './Star';
+import path from 'path';
 
 // 定义收件箱邮件项类型
 type InboxMailItem = {
@@ -39,6 +40,7 @@ type attachment = {
   downloadUrl: string;
   createTime: string;
   fileSize: string;
+  mailId:number;
 }
 
 // 定义邮件详细信息类型
@@ -101,6 +103,7 @@ const Inbox = () => {
   const { userInfo } = useUserInfo();
   const [inboxMails, setInboxMails] = useState<InboxMailItem[]>([]);
   const [selectedMailDetail, setSelectedMailDetail] = useState<MailDetail | null>(null);
+  const [detailed,setDetailed] =useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
@@ -118,10 +121,11 @@ const Inbox = () => {
       return;
     }
     try {
+      console.log()
       const response = await axios.post<InboxResponse>('http://localhost:8080/mail/view', {
         type: 1,
-        page: p,
-        size: pageSize,
+        pagenumber: p,
+        pagesize: pageSize,
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -143,28 +147,30 @@ const Inbox = () => {
     } finally {
       setLoading(false);
     }
-  }, [userInfo, pageSize]);
+  }, [userInfo]);
 
   // 获取邮件详细信息
   const fetchMailDetail = useCallback(async (mailId: number) => {
     console.log('Fetching mail detail for ID:', mailId);
-    console.log('Request URL:', `http://localhost:8080/mail/detail?id=${mailId}`); // 打印请求 URL
+    console.log('Request URL:', `http://localhost:8080/mail/${mailId}`); // 打印请求 URL
     if (!userInfo ) {
       setError('用户信息未找到');
       return;
     }
     try {
-      const response = await axios.get<MailDetail>(`http://localhost:8080/mail/detail`, {
-        params: {
-          id: mailId
-        },
+      console.log(userInfo.token);
+      const response = await axios.post<MailDetail>(`http://localhost:8080/mail/`+mailId, {
+
+      },{
         headers: {
           Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
         },
       });
       if (response.data.code === 0) {
+        console.log(response.data);
+        setDetailed(true);
         setSelectedMailDetail(response.data);
+        setLoading(false);
       } else {
         setError(response.data.message);
       }
@@ -176,7 +182,7 @@ const Inbox = () => {
         setError('获取邮件详细信息失败');
       }
     }
-  }, [userInfo]);
+  }, [inboxMails,userInfo]);
 
   // 处理分页变化
   const handlePageChange = (page: number) => {
@@ -205,8 +211,11 @@ const Inbox = () => {
   const handleDelete = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/delete', {
-        id: selectedMails
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        ids: selectedMails,
+        change:0,
+        type:3,
+        status:1
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -228,8 +237,10 @@ const Inbox = () => {
   const handleStar = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/star', {
-        id: selectedMails
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        change:1,
+        type:2,
+        ids: selectedMails
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -268,13 +279,80 @@ const Inbox = () => {
 
   const pageNumbers = getPageNumbers();
   const {theme} = useTheme();
-
-  return (
-    <>
-    <Star />
-    <InboxContainer style={theme==='dark'?darkTheme:lightTheme}>
-      <h2>收件箱</h2>
-      {selectedMails.length > 0 && (
+  const download = (url:string) => {
+      axios.get(url, {
+      // 关键：设置响应类型为 blob，用于处理二进制文件
+      responseType: 'blob', 
+      headers: {
+          // 若需要携带 token 等认证信息，添加到请求头
+          'Authorization': 'Bearer ' + localStorage.getItem('token') 
+      }
+  })
+  .then(response => {
+      const blob = response.data;
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      // 从响应头解析文件名（若后端设置了 Content-Disposition）
+      const contentDisposition = response.headers['content-disposition']; 
+      if (contentDisposition) {
+          const fileNameMatch = contentDisposition.match(/filename=(.*)/);
+          if (fileNameMatch && fileNameMatch[1]) {
+              a.download = decodeURIComponent(fileNameMatch[1]);
+          }
+      } else {
+          // 后端未设置则自定义
+          a.download = '默认文件名'; 
+      }
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(objectUrl);
+      document.body.removeChild(a);
+  })
+  .catch(error => {
+      console.error('下载失败:', error);
+  });
+  }
+  const MailDetail =() =>{
+    return (
+            <>
+      {selectedMailDetail && (
+        <MailDetailCard className="mt-3">
+          <Card.Header>{selectedMailDetail?.data.theme}</Card.Header>
+          <Card.Body>
+            <div>发件人: {selectedMailDetail?.data.sendname} ({selectedMailDetail?.data.sendaddress})</div>
+            <div>收件人: {selectedMailDetail?.data.recename} ({selectedMailDetail?.data.receaddress})</div>
+            <div>发送时间: {selectedMailDetail?.data.sendtime}</div>
+            <Card.Text>{selectedMailDetail?.data.content}</Card.Text>
+            {selectedMailDetail?.data.attachments && selectedMailDetail?.data.attachments.length > 0 && (
+              <div>
+                <h5>附件</h5>
+                <AttachmentList>
+                  {selectedMailDetail?.data.attachments.map((attachment) => (
+                    <AttachmentItem key={attachment.id}>
+                      <Button onClick={()=>download(attachment.downloadUrl)}>
+                        {attachment.fileName} ({attachment.fileSize})
+                      </Button>
+                      <a href={'file:///'+attachment.downloadUrl} >{attachment.fileName}</a>
+                    </AttachmentItem>
+                  ))}
+                </AttachmentList>
+              </div>
+            )}
+            <Button variant={theme} onClick={() => {setSelectedMailDetail(null);setDetailed(false);}}>
+              关闭
+            </Button>
+          </Card.Body>
+        </MailDetailCard>
+      )}
+      </>
+    )
+  }
+  const InputList = ()=> {
+    if(selectedMailDetail) return (<></>);
+    return (
+      <>
+      {selectedMails.length>0 && (
         <div className="mb-3">
           <Button variant="danger" onClick={handleDelete}>Delete</Button>
           <Button variant="warning" className="ms-2" onClick={handleStar}>Star</Button>
@@ -338,35 +416,20 @@ const Inbox = () => {
           )}
         </InboxListContainer>
       )}
+      </>
+    )
+  }
+  useEffect(()=>{if(selectedMailDetail) {MailDetail}});
+  useEffect(()=>{if(selectedMailDetail===null) {InputList}});
 
-      {selectedMailDetail && (
-        <MailDetailCard className="mt-3">
-          <Card.Header>{selectedMailDetail.data.theme}</Card.Header>
-          <Card.Body>
-            <div>发件人: {selectedMailDetail.data.sendname} ({selectedMailDetail.data.sendaddress})</div>
-            <div>收件人: {selectedMailDetail.data.recename} ({selectedMailDetail.data.receaddress})</div>
-            <div>发送时间: {selectedMailDetail.data.sendtime}</div>
-            <Card.Text>{selectedMailDetail.data.content}</Card.Text>
-            {selectedMailDetail.data.attachments && selectedMailDetail.data.attachments.length > 0 && (
-              <div>
-                <h5>附件</h5>
-                <AttachmentList>
-                  {selectedMailDetail.data.attachments.map((attachment) => (
-                    <AttachmentItem key={attachment.id}>
-                      <a href={attachment.downloadUrl} download={attachment.fileName}>
-                        {attachment.fileName} ({attachment.fileSize})
-                      </a>
-                    </AttachmentItem>
-                  ))}
-                </AttachmentList>
-              </div>
-            )}
-            <Button variant="secondary" onClick={() => setSelectedMailDetail(null)}>
-              关闭
-            </Button>
-          </Card.Body>
-        </MailDetailCard>
-      )}
+  return (
+    <>
+    <InboxContainer style={theme==='dark'?darkTheme:lightTheme}>
+      <h2>收件箱</h2>
+      <InputList />
+
+      <MailDetail />
+      
     </InboxContainer>
     </>
   );
