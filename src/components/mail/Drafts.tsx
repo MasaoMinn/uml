@@ -4,8 +4,9 @@ import { useUserInfo } from '@/context/user';
 import axios from 'axios';
 import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
+import { Accordion } from 'react-bootstrap'; // 引入 Accordion 组件
+import Write from './Write'; // 引入 Write 组件
 
-// 定义草稿邮件项类型
 type DraftMailItem = {
   id: number;
   receiverId: number;
@@ -13,8 +14,11 @@ type DraftMailItem = {
   content: string;
   saveTime: string;
 };
-
-// 定义草稿邮件响应数据类型
+type Mail = {
+    targetemailaddress: string;
+    theme: string;
+    content: string;
+};
 type DraftResponse = {
   code: number;
   message: string;
@@ -68,6 +72,7 @@ const Drafts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增选中邮件 ID 数组
+  const [selectedDraftForWrite, setSelectedDraftForWrite] = useState<DraftMailItem | null>(null);
 
   // 获取草稿邮件列表
   const fetchDraftMails = useCallback(async (p: number) => {
@@ -152,7 +157,10 @@ const Drafts = () => {
   const handleDelete = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/delete', {
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status:4,
+        type:3,
+        change:1,
         id: selectedMails
       }, {
         headers: {
@@ -171,12 +179,38 @@ const Drafts = () => {
     }
   };
 
+  const handleUnfold = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status:4,
+        change: 0,
+        type: 2,
+        ids: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchDraftMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Unkown error occurred.');
+      }
+    }
+  };
+
   return (
     <DraftsContainer>
       <h2>草稿箱</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
           <Button variant="danger" onClick={handleDelete}>Delete</Button>
+          <Button variant="info" className="ms-2" onClick={handleUnfold}>Unfold</Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
@@ -187,26 +221,31 @@ const Drafts = () => {
             <h2>暂无草稿</h2>
           ) : (
             <>
-              <ListGroup>
+              <Accordion>
                 {draftMails.map((mail) => (
-                  <MailListItem
-                    key={mail.id}
-                  >
-                    {/* 应用 Inbox 多选框样式 */}
-                    <Form.Check
-                      type="checkbox"
-                      checked={selectedMails.includes(mail.id)}
-                      onChange={() => handleCheckboxChange(mail.id)}
-                      className="me-2"
-                    />
-                    <div onClick={() => setSelectedMailDetail(mail)}>
+                  <Accordion.Item key={mail.id} eventKey={mail.id.toString()}>
+                    <Accordion.Header>
+                      <Form.Check
+                        type="checkbox"
+                        checked={selectedMails.includes(mail.id)}
+                        onChange={() => handleCheckboxChange(mail.id)}
+                        className="me-2"
+                      />
                       <h5>{mail.theme}</h5>
                       <div>保存时间: {mail.saveTime}</div>
+                    </Accordion.Header>
+                    <Accordion.Body>
                       <div>内容摘要: {mail.content.substring(0, 50)}...</div>
-                    </div>
-                  </MailListItem>
+                      <Button 
+                        variant="primary" 
+                        onClick={() => setSelectedDraftForWrite(mail)}
+                      >
+                        Reveal in Writing
+                      </Button>
+                    </Accordion.Body>
+                  </Accordion.Item>
                 ))}
-              </ListGroup>
+              </Accordion>
               {totalPages > 1 && (
                 <Pagination className="mt-3">
                   {/* 跳转至第一页 */}
@@ -232,7 +271,6 @@ const Drafts = () => {
                     disabled={currentPage === totalPages}
                     onClick={() => handlePageChange(currentPage + 1)}
                   />
-                  {/* 跳转至最后一页 */}
                   <Pagination.Last onClick={() => handlePageChange(totalPages)} />
                 </Pagination>
               )}
@@ -241,10 +279,21 @@ const Drafts = () => {
         </DraftListContainer>
       )}
 
+      {selectedDraftForWrite && (
+        <Write 
+          initialMail={{
+            targetemailaddress: selectedDraftForWrite.receiverId.toString(), // 转换为字符串类型（如果需要）
+            theme: selectedDraftForWrite.theme,
+            content: selectedDraftForWrite.content
+          }}
+        />
+      )}
+
       {selectedMailDetail && (
         <MailDetailCard className="mt-3">
           <Card.Header>{selectedMailDetail.theme}</Card.Header>
           <Card.Body>
+            <Button ></Button>
             <div>收件人 ID: {selectedMailDetail.receiverId}</div>
             <div>保存时间: {selectedMailDetail.saveTime}</div>
             <Card.Text>{selectedMailDetail.content}</Card.Text>

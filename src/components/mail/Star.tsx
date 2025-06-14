@@ -189,10 +189,8 @@ const Star = () => {
 
   const totalPages = Math.ceil(total / pageSize);
 
-  // 定义显示的最大页码数
   const MAX_PAGE_NUMBERS = 5;
 
-  // 生成要显示的页码数组
   const getPageNumbers = () => {
     if (totalPages <= MAX_PAGE_NUMBERS) {
       return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -206,7 +204,6 @@ const Star = () => {
     return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
   };
 
-  // 处理多选框变化
   const handleCheckboxChange = (mailId: number) => {
     if (selectedMails.includes(mailId)) {
       setSelectedMails(selectedMails.filter(id => id !== mailId));
@@ -215,35 +212,14 @@ const Star = () => {
     }
   };
 
-  // 删除选中邮件
-  const handleDelete = async () => {
-    if (selectedMails.length === 0) return;
-    try {
-      await axios.post('http://localhost:8080/mail/delete', {
-        mailIds: selectedMails
-      }, {
-        headers: {
-          Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
-        }
-      });
-      setSelectedMails([]);
-      fetchStarMails(currentPage);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('删除邮件失败');
-      }
-    }
-  };
-
-  // 取消收藏选中邮件
   const handleUnstar = async () => {
     if (selectedMails.length === 0) return;
     try {
       await axios.post('http://localhost:8080/mail/unstar', {
-        mailIds: selectedMails
+        ids: selectedMails,
+        status:3,
+        type:1,
+        change:0,
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -268,8 +244,7 @@ const Star = () => {
       <h2>收藏邮件</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
-          <Button variant="danger" onClick={handleDelete}>Delete</Button>
-          <Button variant="warning" className="ms-2" onClick={handleUnstar}>Unstar</Button>
+          <Button variant="info" className="ms-2" onClick={handleUnstar}>Unstar</Button>
         </div>
       )}
       {loading && <p>加载中...</p>}

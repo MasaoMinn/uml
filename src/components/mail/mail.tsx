@@ -7,14 +7,13 @@ import { useUserInfo } from "@/context/user"; // 新增导入
 import Inbox from "./Inbox";
 import Sent from "./Sent";
 import Drafts from "./Drafts";
-import Folded from "./Folded";
 import Star from "./Star";
 import Write from './Write';
 
 export default function MailComponent() {
     const { theme } = useTheme();
     const { userInfo } = useUserInfo(); // 获取用户信息
-    const [status, setStatus] = useState<'write'|'inbox'|'sent'|'drafts'|'folded'|'star'>('inbox');
+    const [status, setStatus] = useState<'write'|'inbox'|'sent'|'drafts'|'star'>('inbox');
 
     return (
         <Container className="" fluid>
@@ -41,12 +40,6 @@ export default function MailComponent() {
                                 Drafts
                             </div>
                             <div
-                                onClick={() => setStatus('folded')}
-                                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'folded' ? 'active' : ''}`}
-                            >
-                                Folded
-                            </div>
-                            <div
                                 onClick={() => setStatus('write')}
                                 className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'write' ? 'active' : ''}`}
                             >
@@ -70,8 +63,6 @@ export default function MailComponent() {
                         <Sent  />
                     ) : status === 'drafts' ? (
                         <Drafts />
-                    ) : status === 'folded' ? (
-                        <Folded />
                     ) : status === 'star' ? (
                         <Star />
                     ):(<h1 style={{color:'red'}} className="text-center">你怎么弄到这里来的？</h1>)}

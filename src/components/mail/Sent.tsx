@@ -152,8 +152,11 @@ const Sent = () => {
   const handleDelete = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/delete', {
-        id: selectedMails
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status:2,
+        type:2,
+        change:1,
+        ids: selectedMails
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -171,12 +174,66 @@ const Sent = () => {
     }
   };
 
+  // 收藏选中邮件
+  const handleStar = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status:2,
+        change: 1,
+        type: 1,
+        ids: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchSentMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('收藏邮件失败');
+      }
+    }
+  };
+
+  // 取消收藏选中邮件
+  const handleUnstar = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status:2,
+        change: 0,
+        type: 1,
+        ids: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchSentMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('取消收藏邮件失败');
+      }
+    }
+  };
+
   return (
     <SentContainer>
       <h2>已发送</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
           <Button variant="danger" onClick={handleDelete}>Delete</Button>
+          <Button variant="warning" className="ms-2" onClick={handleStar}>Star</Button>
+          <Button variant="info" className="ms-2" onClick={handleUnstar}>Unstar</Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
@@ -192,7 +249,6 @@ const Sent = () => {
                   <MailListItem
                     key={mail.id}
                   >
-                    {/* 应用 Inbox 多选框样式 */}
                     <Form.Check
                       type="checkbox"
                       checked={selectedMails.includes(mail.id)}
@@ -215,7 +271,6 @@ const Sent = () => {
                     disabled={currentPage === 1}
                     onClick={() => handlePageChange(currentPage - 1)}
                   />
-                  {/* 显示省略号，当当前页不是第一页且起始页码大于 1 时 */}
                   {pageNumbers[0] > 1 && <Pagination.Ellipsis disabled />}
                   {pageNumbers.map((page) => (
                     <Pagination.Item
@@ -226,13 +281,11 @@ const Sent = () => {
                       {page}
                     </Pagination.Item>
                   ))}
-                  {/* 显示省略号，当当前页不是最后一页且结束页码小于总页数时 */}
                   {pageNumbers[pageNumbers.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
                   <Pagination.Next
                     disabled={currentPage === totalPages}
                     onClick={() => handlePageChange(currentPage + 1)}
                   />
-                  {/* 跳转至最后一页 */}
                   <Pagination.Last onClick={() => handlePageChange(totalPages)} />
                 </Pagination>
               )}

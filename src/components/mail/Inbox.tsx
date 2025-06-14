@@ -151,8 +151,6 @@ const Inbox = () => {
 
   // 获取邮件详细信息
   const fetchMailDetail = useCallback(async (mailId: number) => {
-    console.log('Fetching mail detail for ID:', mailId);
-    console.log('Request URL:', `http://localhost:8080/mail/${mailId}`); // 打印请求 URL
     if (!userInfo ) {
       setError('用户信息未找到');
       return;
@@ -198,7 +196,6 @@ const Inbox = () => {
     fetchInboxMails(currentPage);
   }, [fetchInboxMails, currentPage]);
 
-  // 处理多选框变化
   const handleCheckboxChange = (mailId: number) => {
     if (selectedMails.includes(mailId)) {
       setSelectedMails(selectedMails.filter(id => id !== mailId));
@@ -213,8 +210,8 @@ const Inbox = () => {
     try {
       await axios.post('http://localhost:8080/mail/mailopera', {
         ids: selectedMails,
-        change:0,
-        type:3,
+        change:1,
+        type:2,
         status:1
       }, {
         headers: {
@@ -238,8 +235,9 @@ const Inbox = () => {
     if (selectedMails.length === 0) return;
     try {
       await axios.post('http://localhost:8080/mail/mailopera', {
+        status:1,
         change:1,
-        type:2,
+        type:1,
         ids: selectedMails
       }, {
         headers: {
@@ -254,6 +252,32 @@ const Inbox = () => {
         setError(err.message);
       } else {
         setError('收藏邮件失败');
+      }
+    }
+  };
+
+  // 取消收藏选中邮件
+  const handleUnstar = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status:1,
+        change: 0,
+        type: 1,
+        ids: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchInboxMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('取消收藏邮件失败');
       }
     }
   };
@@ -354,8 +378,9 @@ const Inbox = () => {
       <>
       {selectedMails.length>0 && (
         <div className="mb-3">
-          <Button variant="danger" onClick={handleDelete}>Delete</Button>
+          <Button variant="danger" onClick={handleDelete}>Move to Trash</Button>
           <Button variant="warning" className="ms-2" onClick={handleStar}>Star</Button>
+          <Button variant="info" className="ms-2" onClick={handleUnstar}>Unstar</Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
