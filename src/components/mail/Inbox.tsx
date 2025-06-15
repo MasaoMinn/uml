@@ -302,40 +302,39 @@ const Inbox = () => {
 
   const pageNumbers = getPageNumbers();
   const {theme} = useTheme();
-  const download = (url:string) => {
-      axios.get(url, {
-      // 关键：设置响应类型为 blob，用于处理二进制文件
-      responseType: 'blob', 
-      headers: {
-          // 若需要携带 token 等认证信息，添加到请求头
-          'Authorization': 'Bearer ' + localStorage.getItem('token') 
-      }
-  })
-  .then(response => {
-      const blob = response.data;
-      const objectUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objectUrl;
-      // 从响应头解析文件名（若后端设置了 Content-Disposition）
-      const contentDisposition = response.headers['content-disposition']; 
-      if (contentDisposition) {
-          const fileNameMatch = contentDisposition.match(/filename=(.*)/);
-          if (fileNameMatch && fileNameMatch[1]) {
-              a.download = decodeURIComponent(fileNameMatch[1]);
-          }
-      } else {
-          // 后端未设置则自定义
-          a.download = '默认文件名'; 
-      }
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(objectUrl);
-      document.body.removeChild(a);
-  })
-  .catch(error => {
-      console.error('下载失败:', error);
-  });
-  }
+const download = (id: number, fileName: string) => {
+      const token = localStorage.getItem('token');
+  axios.get(`http://localhost:8080/mail/download?id=${id}`, {
+    responseType: 'blob',
+    headers: {
+      'Authorization': userInfo?.token
+    }
+  })
+  .then(response => {
+      const blob = response.data;
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      // 从响应头解析文件名（若后端设置了 Content-Disposition）
+      const contentDisposition = response.headers['content-disposition']; 
+      if (contentDisposition) {
+          const fileNameMatch = contentDisposition.match(/filename=(.*)/);
+          if (fileNameMatch && fileNameMatch[1]) {
+              a.download = decodeURIComponent(fileNameMatch[1]);
+          }
+      } else {
+          // 后端未设置则自定义
+          a.download = fileName || `attachment-${id}.bin`; 
+      }
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(objectUrl);
+      document.body.removeChild(a);
+  })
+  .catch(error => {
+      console.error('下载失败:', error);
+  });
+  }
   const MailDetail =() =>{
     return (
             <>
@@ -353,10 +352,9 @@ const Inbox = () => {
                 <AttachmentList>
                   {selectedMailDetail?.data.attachments.map((attachment) => (
                     <AttachmentItem key={attachment.id}>
-                      <Button onClick={()=>download(attachment.downloadUrl)}>
+                      <Button onClick={()=>download(attachment.id,attachment.fileName)}>
                         {attachment.fileName} ({attachment.fileSize})
                       </Button>
-                      <a href={'file:///'+attachment.downloadUrl} >{attachment.fileName}</a>
                     </AttachmentItem>
                   ))}
                 </AttachmentList>
