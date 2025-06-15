@@ -110,38 +110,37 @@ const Write = ({initialMail}: WriteProps ) => {
       setAttachments(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  // 发送邮件
   const sendMail = useCallback(async () => {
-      setIsSending(true);
-      try {
-          const formData = new FormData();
-          formData.append('mail', JSON.stringify(mail));
-          attachments.forEach((file, index) => {
-              formData.append(`attachments[${index}]`, file);
-          });
-          console.log(mail.content+mail.targetemailaddress+mail.theme);
-          console.log(formData.get('attachments[0]'));
-          await axios.post('http://localhost:8080/mail/send', formData, {
-              headers: {
-                  Authorization: userInfo?.token,
-              }
-          });
-          
-          // 重置表单
-          setMail({
-              targetemailaddress: '',
-              theme: '',
-              content: '',
-          });
-          setAttachments([]);
-          
-          alert('邮件发送成功');
-      } catch (error) {
-          alert('发送邮件失败: ' + (error as Error).message);
-      } finally {
-          setIsSending(false);
-      }
-  }, [mail, attachments, userInfo]);
+    setIsSending(true);
+    try {
+        const formData = new FormData();
+        formData.append("mail", JSON.stringify(mail));
+
+        attachments.forEach((file) => {
+            formData.append("attachments", file);
+        });
+
+        await axios.post('http://localhost:8080/mail/send', formData, {
+            headers: {
+                Authorization: userInfo?.token,
+                // 不要手动设置 Content-Type，浏览器会自动带上 boundary
+            }
+        });
+
+        setMail({
+            targetemailaddress: '',
+            theme: '',
+            content: '',
+        });
+        setAttachments([]);
+
+        alert('邮件发送成功');
+    } catch (error) {
+        alert('发送邮件失败: ' + (error as Error).message);
+    } finally {
+        setIsSending(false);
+    }
+}, [mail, attachments, userInfo]);
 
   // 保存草稿
   const saveDraft = useCallback(async () => {
@@ -157,7 +156,6 @@ const Write = ({initialMail}: WriteProps ) => {
           await axios.post('http://localhost:8080/mail/save', formData, {
               headers: {
                   Authorization: userInfo?.token,
-                  'Content-Type': 'multipart/form-data'
               }
           });
           

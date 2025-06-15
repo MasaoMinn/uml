@@ -238,7 +238,7 @@ const Sent = () => {
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error && (
+      {!loading && !error && !selectedMailDetail&&(
         <SentListContainer>
           {sentMails.length === 0 ? (
             <h2>暂无已发送邮件</h2>

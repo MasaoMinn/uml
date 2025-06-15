@@ -13,6 +13,7 @@ type DraftMailItem = {
   theme: string;
   content: string;
   saveTime: string;
+  recaddress:string;
 };
 type Mail = {
     targetemailaddress: string;
@@ -87,8 +88,8 @@ const Drafts = () => {
       // 请替换为实际的草稿邮件接口
       const response = await axios.post<DraftResponse>('http://localhost:8080/mail/view', {
         type:3,
-        page: p,
-        size: pageSize,
+        pagenumber: p,
+        pagesize: pageSize,
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -238,7 +239,7 @@ const Drafts = () => {
                       <div>内容摘要: {mail.content.substring(0, 50)}...</div>
                       <Button 
                         variant="primary" 
-                        onClick={() => setSelectedDraftForWrite(mail)}
+                        onClick={() => {setSelectedDraftForWrite(mail);console.log(mail)}}
                       >
                         Reveal in Writing
                       </Button>
@@ -282,7 +283,7 @@ const Drafts = () => {
       {selectedDraftForWrite && (
         <Write 
           initialMail={{
-            targetemailaddress: selectedDraftForWrite.receiverId.toString(), // 转换为字符串类型（如果需要）
+            targetemailaddress: selectedDraftForWrite.recaddress, // 转换为字符串类型（如果需要）
             theme: selectedDraftForWrite.theme,
             content: selectedDraftForWrite.content
           }}

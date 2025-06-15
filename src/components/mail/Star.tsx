@@ -105,7 +105,7 @@ const Star = () => {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(3);
   const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增：选中的邮件 ID 数组
 
   // 获取收藏邮件列表
@@ -120,8 +120,8 @@ const Star = () => {
     try {
       const response = await axios.post<StarResponse>('http://localhost:8080/mail/view', {
         type: 5,
-        page: p,
-        size: pageSize,
+        pagenumber: p,
+        pagesize: pageSize,
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -153,13 +153,9 @@ const Star = () => {
       return;
     }
     try {
-      const response = await axios.get<MailDetail>(`/api/mail`, {
-        params: {
-          id: mailId
-        },
+      const response = await axios.post(`http://localhost:8080/mail/`+mailId, {},{
         headers: {
           Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
         },
       });
       if (response.data.code === 0) {
@@ -215,7 +211,7 @@ const Star = () => {
   const handleUnstar = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/unstar', {
+      await axios.post('http://localhost:8080/mail/mailopera', {
         ids: selectedMails,
         status:3,
         type:1,
@@ -249,7 +245,7 @@ const Star = () => {
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error && (
+      {!loading && !error &&!selectedMailDetail&& (
         <StarListContainer>
           {starMails.length === 0 ? (
             <h2>暂无收藏邮件</h2>
@@ -259,7 +255,6 @@ const Star = () => {
                 {starMails.map((mail) => (
                   <MailListItem
                     key={mail.id}
-                    onClick={() => fetchMailDetail(mail.id)}
                     isread={mail.isread === 1}
                   >
                     {/* 应用 Inbox 多选框样式 */}
