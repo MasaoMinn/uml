@@ -41,11 +41,13 @@ export default () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false); // 新增：邮箱编辑状态
   const [editedUser, setEditedUser] = useState<UserData>(userInfo?.data || defaultUser.data);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
   const handleEdit = () => setIsEditing(true);
   
   const handleCancel = () => {
@@ -80,7 +82,44 @@ export default () => {
     });
   };
 
-  // 新增修改密码处理函数
+  // 新增：处理邮箱编辑
+  const handleEditEmail = () => setIsEditingEmail(true);
+
+  // 新增：取消邮箱编辑
+  const handleCancelEditEmail = () => {
+    setIsEditingEmail(false);
+    setEditedUser(userInfo?.data || defaultUser.data);
+  };
+
+  // 新增：保存邮箱修改
+  const handleSaveEmail = async () => {
+    if (!userInfo) {
+      setError('用户信息未找到');
+      return;
+    }
+    setIsLoading(true);
+    await axios.post('http://localhost:8080/user/changemail',{
+      emailAddress: editedUser.emailAddress,
+    },{
+      headers: {
+        Authorization: userInfo.token,
+        'Content-Type': 'application/json'
+      }
+    }).then((res)=>{
+      if(res.data.code === 0) {
+        alert('邮箱更新成功');
+        setUserInfo(userInfo.token,editedUser);
+        setIsEditingEmail(false);
+      } else {
+        alert(res.data.message);
+      }
+    }).catch((err)=>{
+      alert(err.message);
+    }).finally(()=>{
+      setIsLoading(false);
+    });
+  };
+
   const handleChangePassword = () => setIsChangingPassword(true);
 
   const handleCancelChangePassword = () => {
@@ -123,11 +162,12 @@ export default () => {
       setIsLoading(false);
     });
   };
+
   const { theme } = useTheme();
   return (
     <div style={theme==='light'?lightTheme:darkTheme}>
     <Card style={{ 
-      width: isEditing || isChangingPassword ? '35vw' : 'fit-content',
+      width: isEditing || isChangingPassword || isEditingEmail ? '35vw' : 'fit-content',
       maxWidth: '90vw',
       minWidth: '20vw',        // 可选：设置最小宽度避免收缩过小
       height: 'auto',
@@ -195,6 +235,26 @@ export default () => {
                       </Button>
                     </div>
                   </div>
+                ) : isEditingEmail ? (
+                  <div>
+                    <Row className="mb-2">
+                      <Col sm="3" className="fw-bold">邮箱地址</Col>
+                      <Col sm="9">
+                        <Form.Control
+                          value={editedUser.emailAddress}
+                          onChange={(e) => setEditedUser({...editedUser, emailAddress: e.target.value})}
+                        />
+                      </Col>
+                    </Row>
+                    <div className="d-flex gap-2 mt-3">
+                      <Button variant="primary" onClick={handleSaveEmail} disabled={isLoading}>
+                        {isLoading ? '保存中...' : '保存'}
+                      </Button>
+                      <Button variant="secondary" onClick={handleCancelEditEmail}>
+                        取消
+                      </Button>
+                    </div>
+                  </div>
                 ) : isEditing ? (
                   <div>
                     <Row className="mb-2">
@@ -240,6 +300,10 @@ export default () => {
                       <Button variant="danger" style={{border:'2px red solid'}} 
                         onClick={handleChangePassword} disabled={isLoading}>
                         修改密码
+                      </Button>
+                      <Button variant="info" style={{border:'2px blue solid'}} 
+                        onClick={handleEditEmail} disabled={isLoading}>
+                        修改邮箱
                       </Button>
                     </div>
                   </div>

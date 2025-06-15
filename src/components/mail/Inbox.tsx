@@ -103,7 +103,6 @@ const Inbox = () => {
   const { userInfo } = useUserInfo();
   const [inboxMails, setInboxMails] = useState<InboxMailItem[]>([]);
   const [selectedMailDetail, setSelectedMailDetail] = useState<MailDetail | null>(null);
-  const [detailed,setDetailed] =useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
@@ -112,7 +111,7 @@ const Inbox = () => {
   const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增：选中的邮件 ID 数组
 
   // 获取收件箱邮件列表
-  const fetchInboxMails = useCallback(async (p: number) => {
+  const fetchInboxMails = useCallback(async () => {
     setLoading(true);
     setError(null);
     if (!userInfo?.data) {
@@ -124,7 +123,7 @@ const Inbox = () => {
       console.log()
       const response = await axios.post<InboxResponse>('http://localhost:8080/mail/view', {
         type: 1,
-        pagenumber: p,
+        pagenumber: currentPage,
         pagesize: pageSize,
       }, {
         headers: {
@@ -133,6 +132,7 @@ const Inbox = () => {
         }
       });
       if (response.data.code === 0) {
+        console.log(response.data.data.records);
         setInboxMails(response.data.data.records);
         setTotal(response.data.data.total);
       } else {
@@ -147,7 +147,7 @@ const Inbox = () => {
     } finally {
       setLoading(false);
     }
-  }, [userInfo]);
+  }, [userInfo,currentPage]);
 
   // 获取邮件详细信息
   const fetchMailDetail = useCallback(async (mailId: number) => {
@@ -166,7 +166,6 @@ const Inbox = () => {
       });
       if (response.data.code === 0) {
         console.log(response.data);
-        setDetailed(true);
         setSelectedMailDetail(response.data);
         setLoading(false);
       } else {
@@ -186,14 +185,14 @@ const Inbox = () => {
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
-    fetchInboxMails(page);
+    fetchInboxMails();
   };
   useEffect(() => {
     setSelectedMailDetail(null);
   }, [inboxMails]); // 添加 inboxMails 作为依赖项
 
   useEffect(() => {
-    fetchInboxMails(currentPage);
+    fetchInboxMails();
   }, [fetchInboxMails, currentPage]);
 
   const handleCheckboxChange = (mailId: number) => {
@@ -220,7 +219,7 @@ const Inbox = () => {
         }
       });
       setSelectedMails([]);
-      fetchInboxMails(currentPage);
+      fetchInboxMails();
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -246,7 +245,7 @@ const Inbox = () => {
         }
       });
       setSelectedMails([]);
-      fetchInboxMails(currentPage);
+      fetchInboxMails();
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -272,7 +271,7 @@ const Inbox = () => {
         }
       });
       setSelectedMails([]);
-      fetchInboxMails(currentPage);
+      fetchInboxMails();
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -363,7 +362,7 @@ const Inbox = () => {
                 </AttachmentList>
               </div>
             )}
-            <Button variant={theme} onClick={() => {setSelectedMailDetail(null);setDetailed(false);}}>
+            <Button variant={theme} onClick={() => {setSelectedMailDetail(null);}}>
               关闭
             </Button>
           </Card.Body>
@@ -395,7 +394,6 @@ const Inbox = () => {
                 {inboxMails.map((mail) => (
                   <MailListItem  style={theme==='dark'?darkTheme:lightTheme}
                     key={mail.id}
-                    
                     isread={mail.isread === 1}
                   >
                     <Form.Check
