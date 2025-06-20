@@ -2,22 +2,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUserInfo } from '@/context/user';
 import axios from 'axios';
-import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
+import { Card, Button, Pagination, Form, Container, Row, Col, FormControl } from 'react-bootstrap';
 import styled from 'styled-components';
-import { useTheme ,lightTheme,darkTheme } from '@/context/theme';
+import { useTheme, lightTheme, darkTheme } from '@/context/theme';
 
 // 定义已发送邮件项类型
 type SentMailItem = {
   id: number;
-  senderId: number;
-  receiverId: number;
+  sendername: number;
+  sendaddress: string;
+  receivername: string;
+  recaddress: string;
   theme: string;
   content: string;
-  sendTime: string;
-  star: number;
-  isread: boolean;
-  draft: number;
-  junk: number;
+  summary:string;
+  sendtime: string;
+  isread: number;
+  sedstatus: number;
+  recstatus: number;
+  attachments: attachment[];
 };
 
 // 定义已发送邮件响应数据类型
@@ -32,13 +35,25 @@ type SentResponse = {
     pages: number;
   };
 };
+type attachment = {
+  id: number;
+  fileName: string;
+  downloadUrl: string;
+  createTime: string;
+  fileSize: string;
+  mailId: number;
+};
 
 // 定义邮件列表项样式
-const MailListItem = styled(ListGroup.Item)`
+const MailListItem = styled.div`
   cursor: pointer;
-  &:hover {
+  // 定义未读邮件的样式
+  &.unread {
+    font-weight: bold;
     background-color: #f8f9fa;
   }
+  border-bottom: 1px solid #dee2e6;
+  padding: 8px 0;
 `;
 
 // 定义已发送邮件列表容器样式
@@ -64,6 +79,17 @@ const SentContainer = styled.div`
   margin-top: 20px;
 `;
 
+// 定义附件列表样式
+const AttachmentList = styled.ul`
+  list-style-type: none;
+  padding: 0;
+`;
+
+// 定义附件项样式
+const AttachmentItem = styled.li`
+  margin: 8px 0;
+`;
+
 const Sent = () => {
   const { userInfo } = useUserInfo();
   const [sentMails, setSentMails] = useState<SentMailItem[]>([]);
@@ -73,7 +99,7 @@ const Sent = () => {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增选中邮件 ID 数组
+  const [selectedMails, setSelectedMails] = useState<number[]>([]);
 
   // 获取已发送邮件列表
   const fetchSentMails = useCallback(async (p: number) => {
@@ -85,8 +111,8 @@ const Sent = () => {
       return;
     }
     try {
-      const response = await axios.post<SentResponse>('http://localhost:8080/mail/view', {
-        type:2,
+      const response = await axios.post<SentResponse>(`${process.env.NEXT_PUBLIC_API_URL}/mail/view`, {
+        type: 2,
         pagenumber: p,
         pagesize: pageSize,
       }, {
@@ -112,6 +138,28 @@ const Sent = () => {
       setLoading(false);
     }
   }, [userInfo, pageSize]);
+
+  // 获取邮件详情
+  const fetchMailDetail = useCallback(async (mailId: number) => {
+    if (!userInfo?.data) {
+      setError('请先登录');
+      return;
+    }
+    try {
+      const response = await axios.get<SentMailItem>(`${process.env.NEXT_PUBLIC_API_URL}/mail/${mailId}`, {
+        headers: {
+          Authorization: userInfo?.token,
+        },
+      });
+      setSelectedMailDetail(response.data);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('获取邮件详情失败');
+      }
+    }
+  }, [userInfo]);
 
   // 处理分页变化
   const handlePageChange = (page: number) => {
@@ -158,10 +206,10 @@ const Sent = () => {
   const handleDelete = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        status:2,
-        type:2,
-        change:1,
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
+        status: 2,
+        type: 2,
+        change: 1,
         ids: selectedMails
       }, {
         headers: {
@@ -184,8 +232,8 @@ const Sent = () => {
   const handleStar = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        status:2,
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
+        status: 2,
         change: 1,
         type: 1,
         ids: selectedMails
@@ -210,8 +258,8 @@ const Sent = () => {
   const handleUnstar = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        status:2,
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
+        status: 2,
         change: 0,
         type: 1,
         ids: selectedMails
@@ -231,10 +279,45 @@ const Sent = () => {
       }
     }
   };
-  const {theme} =useTheme();
+
+  const { theme } = useTheme();
+
+  const download = (id: number, fileName: string) => {
+    const token = localStorage.getItem('token');
+    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/mail/download?id=${id}`, {
+      responseType: 'blob',
+      headers: {
+        'Authorization': userInfo?.token
+      }
+    })
+      .then(response => {
+        const blob = response.data;
+        const objectUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        // 从响应头解析文件名（若后端设置了 Content-Disposition）
+        const contentDisposition = response.headers['content-disposition'];
+        if (contentDisposition) {
+          const fileNameMatch = contentDisposition.match(/filename=(.*)/);
+          if (fileNameMatch && fileNameMatch[1]) {
+            a.download = decodeURIComponent(fileNameMatch[1]);
+          }
+        } else {
+          // 后端未设置则自定义
+          a.download = fileName || `attachment-${id}.bin`;
+        }
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(objectUrl);
+        document.body.removeChild(a);
+      })
+      .catch(error => {
+        console.error('下载失败:', error);
+      });
+  };
 
   return (
-    <SentContainer>
+    <SentContainer style={theme === 'dark' ? darkTheme : lightTheme}>
       <h2>已发送</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
@@ -251,72 +334,136 @@ const Sent = () => {
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error &&!selectedMailDetail&& (
+      {!loading && !error && !selectedMailDetail && (
         <SentListContainer>
           {sentMails.length === 0 ? (
             <h2>暂无已发送邮件</h2>
           ) : (
-            <ListGroup>
-              {sentMails.map((mail) => (
-                <MailListItem
-                  key={mail.id}
-                  style={theme === 'dark' ? darkTheme : lightTheme}
-                >
-                  <Form.Check
-                    type="checkbox"
-                    checked={selectedMails.includes(mail.id)}
-                    onChange={() => handleCheckboxChange(mail.id)}
-                    className="me-2"
+            <>
+              <Container fluid className='text-center' style={{ border: '1px solid black' }}>
+                <Row className="align-items-center">
+                  <Col lg={1}>Select</Col>
+                  <Col lg={1}>状态</Col>
+                  <Col lg={2}>收件人</Col>
+                  <Col lg={2}>收件地址</Col>
+                  <Col lg={2}>主题</Col>
+                  <Col lg={2}>发送时间</Col>
+                  <Col lg={1}>内容</Col>
+                  <Col lg={1}>操作</Col>
+                </Row>
+                {sentMails.map((mail) => (
+                  <MailListItem
+                    key={mail.id}
+                    style={theme === 'dark' ? darkTheme : lightTheme}
+                    className={!mail.isread ? 'unread' : ''}
+                  >
+                    <Row className="align-items-center">
+                      <Col lg={1}>
+                        <Form.Check
+                          type="checkbox"
+                          checked={selectedMails.includes(mail.id)}
+                          onChange={() => handleCheckboxChange(mail.id)}
+                          className="me-2"
+                        />
+                      </Col>
+                      <Col lg={1}>
+                        {mail.recstatus === 1 && ' ⭐'} {mail.isread ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
+                      </Col>
+                      <Col lg={2}>{mail.receivername}</Col>
+                      <Col lg={2}>[{mail.recaddress}]</Col>
+                      <Col lg={2}>{mail.theme}</Col>
+                      <Col lg={2}>{mail.sendtime}</Col>
+                      <Col lg={1}>{mail.content.substring(0, 50)}...</Col>
+                      <Col lg={1}>
+                        <Button variant={theme} onClick={() => fetchMailDetail(mail.id)}>
+                          Enter
+                        </Button>
+                      </Col>
+                    </Row>
+                  </MailListItem>
+                ))}
+              </Container>
+              {totalPages > 1 && (
+                <Pagination className="mt-3">
+                  <Pagination.First onClick={() => handlePageChange(1)} />
+                  <Pagination.Prev
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
                   />
-                  <div onClick={() => setSelectedMailDetail(mail)}>
-                    <p>
-                      To: {mail.receiverId} - {mail.theme}  {mail.sendTime}
-                      {mail.star === 1 && ' ⭐'}
-                    </p>
-                    <div>内容摘要: {mail.content.substring(0, 50)}...</div>
-                  </div>
-                </MailListItem>
-              ))}
-            </ListGroup>
-          )}
-          {totalPages > 1 && (
-            <Pagination className="mt-3">
-              <Pagination.First onClick={() => handlePageChange(1)} />
-              <Pagination.Prev
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-              />
-              {pageNumbers[0] > 1 && <Pagination.Ellipsis disabled />}
-              {pageNumbers.map((page) => (
-                <Pagination.Item
-                  key={page}
-                  active={page === currentPage}
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </Pagination.Item>
-              ))}
-              {pageNumbers[pageNumbers.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
-              <Pagination.Next
-                disabled={currentPage === totalPages}
-                onClick={() => handlePageChange(currentPage + 1)}
-              />
-              <Pagination.Last onClick={() => handlePageChange(totalPages)} />
-            </Pagination>
+                  {pageNumbers[0] > 1 && <Pagination.Ellipsis disabled />}
+                  {pageNumbers.map((page) => (
+                    <Pagination.Item
+                      key={page}
+                      active={page === currentPage}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Pagination.Item>
+                  ))}
+                  {pageNumbers[pageNumbers.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
+                  <Pagination.Next
+                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                  />
+                  <Pagination.Last onClick={() => handlePageChange(totalPages)} />
+                </Pagination>
+              )}
+            </>
           )}
         </SentListContainer>
       )}
-
       {selectedMailDetail && (
         <MailDetailCard className="mt-3" style={theme === 'dark' ? darkTheme : lightTheme}>
-          <Card.Header>{selectedMailDetail.theme}</Card.Header>
+          <Card.Header>
+            <h3>{selectedMailDetail.theme}</h3>
+          </Card.Header>
           <Card.Body>
-            <div>收件人 ID: {selectedMailDetail.receiverId}</div>
-            <div>发送时间: {selectedMailDetail.sendTime}</div>
-            <Card.Text>{selectedMailDetail.content}</Card.Text>
-            <Button variant="secondary" onClick={() => setSelectedMailDetail(null)}>
-              关闭
-            </Button>
+            <Container fluid>
+              <Row xs='auto'>
+                <Col>发件人: {selectedMailDetail.sendername} </Col>
+                <Col style={{ color: 'gray' }}>({selectedMailDetail.sendaddress})</Col>
+              </Row>
+              <Row xs='auto'>
+                <Col>收件人: {selectedMailDetail.receivername} </Col>
+                <Col style={{ color: 'gray' }}>({selectedMailDetail.recaddress})</Col>
+              </Row>
+              <Row xs='auto'>
+                <Col>发送时间: </Col>
+                <Col>{selectedMailDetail.sendtime}</Col>
+              </Row>
+              <br />
+              <Row>Body:</Row>
+              <Row className="mt-3">
+                <Col>
+                  <FormControl
+                    as="textarea"
+                    value={selectedMailDetail.content || ''}
+                    readOnly
+                    rows={5}
+                    style={{ resize: 'none' }}
+                  />
+                </Col>
+              </Row>
+              <br />
+              <br />
+              {selectedMailDetail.attachments && selectedMailDetail.attachments.length > 0 && (
+                <div>
+                  <p>attachments</p>
+                  <AttachmentList>
+                    {selectedMailDetail.attachments.map((attachment) => (
+                      <AttachmentItem key={attachment.id}>
+                        <Button variant={theme} onClick={() => download(attachment.id, attachment.fileName)}>
+                          {attachment.fileName} ({attachment.fileSize + 'B'})
+                        </Button>
+                      </AttachmentItem>
+                    ))}
+                  </AttachmentList>
+                </div>
+              )}
+              <Button variant={theme} onClick={() => setSelectedMailDetail(null)}>
+                关闭
+              </Button>
+            </Container>
           </Card.Body>
         </MailDetailCard>
       )}

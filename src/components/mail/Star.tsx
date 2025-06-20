@@ -2,25 +2,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUserInfo } from '@/context/user';
 import axios from 'axios';
-import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
+import { Card, Button, Pagination, Form, Container, Row, Col, FormControl } from 'react-bootstrap';
 import styled from 'styled-components';
-import { darkTheme, lightTheme, useTheme } from '@/context/theme';
+import { useTheme, lightTheme, darkTheme } from '@/context/theme';
 
 // 定义收藏邮件项类型
 type StarMailItem = {
   id: number;
-  senderId: number;
-  receiverId: number;
+  sendername: number;
+  sendaddress: string;
+  receivername: string;
+  recaddress: string;
   theme: string;
   content: string;
-  sendTime: string;
-  star: number;
+  summary: string;
+  sendtime: string;
   isread: number;
-  draft: number;
-  junk: number;
+  sedstatus: number;
+  recstatus: number;
+  attachments: attachment[];
 };
 
-// 定义收藏邮件响应数据类型
+// 定义收藏响应数据类型
 type StarResponse = {
   code: number;
   message: string;
@@ -32,39 +35,28 @@ type StarResponse = {
     pages: number;
   };
 };
-
-// 定义邮件详细信息类型
-type MailDetail = {
-  code: number;
-  message: string;
-  data: {
-    mailid: number;
-    sendaddress: string;
-    sendname: string;
-    receaddress: string;
-    recename: string;
-    theme: string;
-    content: string;
-    sendtime: string;
-    attachments: {
-      id: number;
-      fileName: string;
-      downloadUrl: string;
-      createTime: string;
-      fileSize: string;
-    }[] | null;
-  };
-};
+type attachment = {
+  id: number;
+  fileName: string;
+  downloadUrl: string;
+  createTime: string;
+  fileSize: string;
+  mailId:number;
+}
 
 // 定义邮件列表项样式
-const MailListItem = styled(ListGroup.Item)`
+const MailListItem = styled.div`
   cursor: pointer;
-  &:hover {
+  // 定义未读邮件的样式
+  &.unread {
+    font-weight: bold;
     background-color: #f8f9fa;
   }
+  border-bottom: 1px solid #dee2e6;
+  padding: 8px 0;
 `;
 
-// 定义收藏邮件列表容器样式
+// 定义收藏列表容器样式
 const StarListContainer = styled.div`
   border: 1px solid #dee2e6;
   border-radius: 4px;
@@ -79,14 +71,6 @@ const MailDetailCard = styled(Card)`
   padding: 16px;
 `;
 
-// 定义整个收藏邮件容器样式
-const StarContainer = styled.div`
-  border: 1px solid #ccc; 
-  border-radius: 8px; 
-  padding: 20px; 
-  margin-top: 20px; 
-`;
-
 // 定义附件列表样式
 const AttachmentList = styled.ul`
   list-style-type: none;
@@ -97,17 +81,24 @@ const AttachmentList = styled.ul`
 const AttachmentItem = styled.li`
   margin: 8px 0;
 `;
+// 定义整个收藏容器样式
+const StarContainer = styled.div`
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+`;
 
 const Star = () => {
   const { userInfo } = useUserInfo();
   const [starMails, setStarMails] = useState<StarMailItem[]>([]);
-  const [selectedMailDetail, setSelectedMailDetail] = useState<MailDetail | null>(null);
+  const [selectedMailDetail, setSelectedMailDetail] = useState<StarMailItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(3);
-  const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增：选中的邮件 ID 数组
+  const [pageSize] = useState(10);
+  const [selectedMails, setSelectedMails] = useState<number[]>([]);
 
   // 获取收藏邮件列表
   const fetchStarMails = useCallback(async (p: number) => {
@@ -119,8 +110,8 @@ const Star = () => {
       return;
     }
     try {
-      const response = await axios.post<StarResponse>('http://localhost:8080/mail/view', {
-        type: 5,
+      const response = await axios.post<StarResponse>(`${process.env.NEXT_PUBLIC_API_URL}/mail/view`, {
+        type: 1,
         pagenumber: p,
         pagesize: pageSize,
       }, {
@@ -146,33 +137,6 @@ const Star = () => {
     }
   }, [userInfo, pageSize]);
 
-  // 获取邮件详细信息
-  const fetchMailDetail = useCallback(async (mailId: number) => {
-    setError(null);
-    if (userInfo?.data.username === 'Data Not Found') {
-      setError('用户信息未找到');
-      return;
-    }
-    try {
-      const response = await axios.post(`http://localhost:8080/mail/`+mailId, {},{
-        headers: {
-          Authorization: userInfo?.token,
-        },
-      });
-      if (response.data.code === 0) {
-        setSelectedMailDetail(response.data);
-      } else {
-        setError(response.data.message);
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('获取邮件详细信息失败');
-      }
-    }
-  }, [userInfo]);
-
   // 处理分页变化
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
@@ -186,8 +150,10 @@ const Star = () => {
 
   const totalPages = Math.ceil(total / pageSize);
 
+  // 定义显示的最大页码数
   const MAX_PAGE_NUMBERS = 5;
 
+  // 生成要显示的页码数组
   const getPageNumbers = () => {
     if (totalPages <= MAX_PAGE_NUMBERS) {
       return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -201,6 +167,9 @@ const Star = () => {
     return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
   };
 
+  const pageNumbers = getPageNumbers();
+
+  // 处理多选框变化
   const handleCheckboxChange = (mailId: number) => {
     if (selectedMails.includes(mailId)) {
       setSelectedMails(selectedMails.filter(id => id !== mailId));
@@ -209,14 +178,41 @@ const Star = () => {
     }
   };
 
+  // 删除选中邮件
+  const handleDelete = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
+        status: 4,
+        type: 3,
+        change: 1,
+        id: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchStarMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('删除邮件失败');
+      }
+    }
+  };
+
+  // 取消收藏选中邮件
   const handleUnstar = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        ids: selectedMails,
-        status:3,
-        type:1,
-        change:0,
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
+        status: 1,
+        change: 0,
+        type: 1,
+        ids: selectedMails
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -233,55 +229,105 @@ const Star = () => {
       }
     }
   };
+const download = (id: number, fileName: string) => {
+      const token = localStorage.getItem('token');
+  axios.get(`${process.env.NEXT_PUBLIC_API_URL}/mail/download?id=${id}`, {
+    responseType: 'blob',
+    headers: {
+      'Authorization': userInfo?.token
+    }
+  })
+  .then(response => {
+      const blob = response.data;
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      const contentDisposition = response.headers['content-disposition']; 
+      if (contentDisposition) {
+          const fileNameMatch = contentDisposition.match(/filename=(.*)/);
+          if (fileNameMatch && fileNameMatch[1]) {
+              a.download = decodeURIComponent(fileNameMatch[1]);
+          }
+      } else {
+          // 后端未设置则自定义
+          a.download = fileName || `attachment-${id}.bin`; 
+      }
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(objectUrl);
+      document.body.removeChild(a);
+  })
+  .catch(error => {
+      console.error('下载失败:', error);
+  });
+  }
 
-  const pageNumbers = getPageNumbers();
-  const {theme} = useTheme();
+  const { theme } = useTheme();
 
   return (
-    <StarContainer>
+    <StarContainer style={theme === 'dark' ? darkTheme : lightTheme}>
       <h2>收藏邮件</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
+          <Button variant={theme} onClick={handleDelete}>
+            <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i> 删除
+          </Button>
           <Button variant="info" className="ms-2" onClick={handleUnstar}>
-            <i className="bi bi-star-fill"></i> UnStar
+            <i className="bi bi-star-fill"></i> 取消收藏
           </Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error &&!selectedMailDetail&& (
+      {!loading && !error && !selectedMailDetail && (
         <StarListContainer>
           {starMails.length === 0 ? (
             <h2>暂无收藏邮件</h2>
           ) : (
             <>
-              <ListGroup>
+              <Container fluid className='text-center' style={{ border: '1px solid black' }}>
+                <Row className="align-items-center">
+                  <Col lg={1}>Select</Col>
+                  <Col lg={1}>状态</Col>
+                  <Col lg={2}>发件人</Col>
+                  <Col lg={2}>发件地址</Col>
+                  <Col lg={2}>主题</Col>
+                  <Col lg={2}>发送时间</Col>
+                  <Col lg={1}>内容</Col>
+                  <Col lg={1}>操作</Col>
+                </Row>
                 {starMails.map((mail) => (
                   <MailListItem
                     key={mail.id}
-                    isread={mail.isread === 1}
-                    style={theme==='dark'?darkTheme:lightTheme}
+                    style={theme === 'dark' ? darkTheme : lightTheme}
+                    className={!mail.isread ? 'unread' : ''}
                   >
-                    <Form.Check
-                      type="checkbox"
-                      checked={selectedMails.includes(mail.id)}
-                      onChange={() => handleCheckboxChange(mail.id)}
-                      className="me-2"
-                    />
-                    <div onClick={() => fetchMailDetail(mail.id)}>
-                      {/* 添加发送时间到第一行 */}
-                      <p>
-                        From: {mail.senderId} - {mail.theme} {mail.sendTime} 
-                        {mail.star === 1 && ' ⭐'}
-                      </p>
-                      <div>内容摘要: {mail.content.substring(0, 50)}...</div>
-                    </div>
+                    <Row className="align-items-center">
+                      <Col lg={1}>
+                        <Form.Check
+                          type="checkbox"
+                          checked={selectedMails.includes(mail.id)}
+                          onChange={() => handleCheckboxChange(mail.id)}
+                          className="me-2"
+                        />
+                      </Col>
+                      <Col lg={1}>{mail.recstatus === 1 && ' ⭐'} {mail.isread ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}</Col>
+                      <Col lg={2}>{mail.sendername}</Col>
+                      <Col lg={2}>[{mail.sendaddress}]</Col>
+                      <Col lg={2}>{mail.theme}</Col>
+                      <Col lg={2}>{mail.sendtime}</Col>
+                      <Col lg={1}>{mail.content.substring(0, 50)}...</Col>
+                      <Col lg={1}>
+                        <Button variant={theme} onClick={() => setSelectedMailDetail(mail)}>
+                          Enter
+                        </Button>
+                      </Col>
+                    </Row>
                   </MailListItem>
                 ))}
-              </ListGroup>
+              </Container>
               {totalPages > 1 && (
                 <Pagination className="mt-3">
-                  {/* 跳转至第一页 */}
                   <Pagination.First onClick={() => handlePageChange(1)} />
                   <Pagination.Prev
                     disabled={currentPage === 1}
@@ -302,7 +348,6 @@ const Star = () => {
                     disabled={currentPage === totalPages}
                     onClick={() => handlePageChange(currentPage + 1)}
                   />
-                  {/* 跳转至最后一页 */}
                   <Pagination.Last onClick={() => handlePageChange(totalPages)} />
                 </Pagination>
               )}
@@ -312,22 +357,32 @@ const Star = () => {
       )}
 
       {selectedMailDetail && (
-        <MailDetailCard className="mt-3">
-          <Card.Header>{selectedMailDetail.data.theme}</Card.Header>
+        <MailDetailCard className="mt-3" style={theme === 'dark' ? darkTheme : lightTheme}>
+          <Card.Header><h3>{selectedMailDetail.theme}{'⭐'}</h3></Card.Header>
           <Card.Body>
-            <div>发件人: {selectedMailDetail.data.sendname} ({selectedMailDetail.data.sendaddress})</div>
-            <div>收件人: {selectedMailDetail.data.recename} ({selectedMailDetail.data.receaddress})</div>
-            <div>发送时间: {selectedMailDetail.data.sendtime}</div>
-            <Card.Text>{selectedMailDetail.data.content}</Card.Text>
-            {selectedMailDetail.data.attachments && selectedMailDetail.data.attachments.length > 0 && (
+            <div>发件人: {selectedMailDetail.sendername} ({selectedMailDetail.sendaddress})</div>
+            <div>收件人: {selectedMailDetail.receivername} ({selectedMailDetail.recaddress})</div>
+            <div>发送时间: {selectedMailDetail.sendtime}</div>
+            <br />
+            Body:
+            <FormControl
+              as="textarea"
+              value={selectedMailDetail.content || ''}
+              readOnly
+              rows={5}
+              style={{ resize: 'none' }}
+            />
+            <br />
+            <br />
+            {selectedMailDetail?.attachments && selectedMailDetail?.attachments.length > 0 && (
               <div>
-                <h5>附件</h5>
+                <p>attachments</p>
                 <AttachmentList>
-                  {selectedMailDetail.data.attachments.map((attachment) => (
+                  {selectedMailDetail?.attachments.map((attachment) => (
                     <AttachmentItem key={attachment.id}>
-                      <a href={attachment.downloadUrl} download={attachment.fileName}>
-                        {attachment.fileName} ({attachment.fileSize})
-                      </a>
+                      <Button variant={theme} onClick={()=>download(attachment.id,attachment.fileName)}>
+                        {attachment.fileName} ({attachment.fileSize +'B'})
+                      </Button>
                     </AttachmentItem>
                   ))}
                 </AttachmentList>

@@ -15,22 +15,9 @@ export default function Main() {
   const { userInfo } = useUserInfo();
   return (
     // 应用选择的样式
-    <Container fluid style={containerStyle} className="p-2"> 
-      <Row>
-        <Col>
+    <Container fluid style={containerStyle} className="p-2">
           <NavBar />
-        </Col>
-      </Row>
-      <Row>
-        <Col>
-          {userInfo?.data&&<UserCard />}
-        </Col>
-      </Row>
-      <Row>
-        <Col>
           <Mail />
-        </Col>
-      </Row>
     </Container>
   )
 }

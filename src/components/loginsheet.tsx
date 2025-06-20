@@ -35,7 +35,7 @@ export default function LoginSheet() {
 
   const logout = () => {
     axios({
-      url: 'http://localhost:8080/user/logout',
+      url: `${process.env.NEXT_PUBLIC_API_URL}/user/logout`,
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ const Register = () => {
     const [err, setErr] = useState('');
     const send  = () => {
       console.log(':'+curuser.phoneNumber);
-      axios.get('http://localhost:8080/user/sendCode',{
+      axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/sendCode`,{
       params: {
         phone: curuser.phoneNumber ,
       }
@@ -86,7 +86,7 @@ const Register = () => {
     }
   const register = () => {
     console.log("用户注册：",curuser);
-    axios.post('http://localhost:8080/user/register', {
+    axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/register`, {
       username: curuser.userName,
       password: curuser.password,
       emailAddress: curuser.emailAddress+'@Hgmail.com',
@@ -231,7 +231,7 @@ const Login = () => {
   const [namae, setNamae] = useState<boolean>(true);
   const login =() => {
     console.log("用户登录：",curuser);
-    axios.post("http://localhost:8080/user/login", {
+    axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/login`, {
       username: curuser.userName,
       emailAddress:curuser.userName+'@Hgmail.com',
       password: curuser.password
@@ -328,7 +328,7 @@ const Login = () => {
   const Forget1 = () => {
   const check1 = () => {
     
-    axios.post('http://localhost:8080/user/forgetps1',{
+    axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/forgetps1`,{
       username: curuser.userName,
       emailAddress: curuser.emailAddress,
     },{
@@ -405,7 +405,7 @@ const Login = () => {
     const check2 = () => {
       console.log(curuser.password);
       setCapcha(curuser.password);
-      axios.post('http://localhost:8080/user/forgetps3', {
+      axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/forgetps3`, {
           telephone: phonen,
         },{
         headers: {
@@ -427,7 +427,7 @@ const Login = () => {
     }
     const send  = () => {
       console.log(':'+phonen);
-      axios.get('http://localhost:8080/user/sendCode',{
+      axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/sendCode`,{
       params: {
         phone: phonen,
       }
@@ -487,7 +487,7 @@ const Login = () => {
         return;
       }
       console.log(namen+emaila+passw+capcha+phonen+stat)
-      axios.post('http://localhost:8080/user/forgetps4', {
+      axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/forgetps4`, {
         username: namen,
         emailAddress: emaila,
         password: passw,
@@ -564,7 +564,6 @@ const Login = () => {
   return (
     <>
       {!userInfo?.data&&<Button variant={theme} onClick={()=>{setStatus('login');handleShow()}}>登录/注册</Button>}
-      {userInfo?.data&&<Button variant={theme} onClick={logout}>退出登录<i className="bi bi-person-dash"></i></Button>}
       {status === 'login' && <Login />}
       {status === 'register' && <Register />}
       {status === 'forget1' && <Forget1 />}

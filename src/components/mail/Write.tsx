@@ -120,7 +120,7 @@ const Write = ({initialMail}: WriteProps ) => {
             formData.append("attachments", file);
         });
 
-        await axios.post('http://localhost:8080/mail/send', formData, {
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/send`, formData, {
             headers: {
                 Authorization: userInfo?.token,
                 // 不要手动设置 Content-Type，浏览器会自动带上 boundary
@@ -153,7 +153,7 @@ const Write = ({initialMail}: WriteProps ) => {
               formData.append(`attachments[${index}]`, file);
           });
           
-          await axios.post('http://localhost:8080/mail/save', formData, {
+          await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/save`, formData, {
               headers: {
                   Authorization: userInfo?.token,
               }

@@ -2,25 +2,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUserInfo } from '@/context/user';
 import axios from 'axios';
-import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
+import { Card, Button, Pagination, Form, Container, Row, Col, FormControl } from 'react-bootstrap';
 import styled from 'styled-components';
-import { Accordion } from 'react-bootstrap'; // 引入 Accordion 组件
-import Write from './Write'; // 引入 Write 组件
+import Write from './Write';
 import { useTheme, lightTheme, darkTheme } from '@/context/theme';
 
+// 定义草稿邮件项类型
 type DraftMailItem = {
   id: number;
-  receiverId: number;
+  sendername: number;
+  sendaddress: string;
+  receivername: string;
+  recaddress: string;
   theme: string;
   content: string;
-  saveTime: string;
-  recaddress:string;
+  summary: string;
+  sendtime: string;
+  isread: number;
+  sedstatus: number;
+  recstatus: number;
+  attachments: attachment[];
 };
-type Mail = {
-    targetemailaddress: string;
-    theme: string;
-    content: string;
-};
+
+// 定义草稿响应数据类型
 type DraftResponse = {
   code: number;
   message: string;
@@ -32,10 +36,25 @@ type DraftResponse = {
     pages: number;
   };
 };
+type attachment = {
+  id: number;
+  fileName: string;
+  downloadUrl: string;
+  createTime: string;
+  fileSize: string;
+  mailId:number;
+}
 
 // 定义邮件列表项样式
-const MailListItem = styled(ListGroup.Item)`
+const MailListItem = styled.div`
   cursor: pointer;
+  // 定义未读邮件的样式
+  &.unread {
+    font-weight: bold;
+    background-color: #f8f9fa;
+  }
+  border-bottom: 1px solid #dee2e6;
+  padding: 8px 0;
 `;
 
 // 定义草稿列表容器样式
@@ -70,7 +89,7 @@ const Drafts = () => {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增选中邮件 ID 数组
+  const [selectedMails, setSelectedMails] = useState<number[]>([]); 
   const [selectedDraftForWrite, setSelectedDraftForWrite] = useState<DraftMailItem | null>(null);
 
   // 获取草稿邮件列表
@@ -83,9 +102,8 @@ const Drafts = () => {
       return;
     }
     try {
-      // 请替换为实际的草稿邮件接口
-      const response = await axios.post<DraftResponse>('http://localhost:8080/mail/view', {
-        type:3,
+      const response = await axios.post<DraftResponse>(`${process.env.NEXT_PUBLIC_API_URL}/mail/view`, {
+        type: 3,
         pagenumber: p,
         pagesize: pageSize,
       }, {
@@ -95,6 +113,7 @@ const Drafts = () => {
         }
       });
       if (response.data.code === 0) {
+        console.log(response.data.data.records);
         setDraftMails(response.data.data.records);
         setTotal(response.data.data.total);
       } else {
@@ -156,11 +175,11 @@ const Drafts = () => {
   const handleDelete = async () => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        status:4,
-        type:3,
-        change:1,
-        id: selectedMails
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
+        status: 5,
+        type: 3,
+        change: 1,
+        ids: selectedMails
       }, {
         headers: {
           Authorization: userInfo?.token,
@@ -178,80 +197,70 @@ const Drafts = () => {
     }
   };
 
-  const handleUnfold = async () => {
-    if (selectedMails.length === 0) return;
-    try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        status:4,
-        change: 0,
-        type: 2,
-        ids: selectedMails
-      }, {
-        headers: {
-          Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
-        }
-      });
-      setSelectedMails([]);
-      fetchDraftMails(currentPage);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Unkown error occurred.');
-      }
-    }
-  };
-  const {theme} =useTheme();
+  const { theme } = useTheme();
 
   return (
-    <DraftsContainer>
+    <DraftsContainer style={theme === 'dark' ? darkTheme : lightTheme}>
       <h2>草稿箱</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
           <Button variant={theme} onClick={handleDelete}>
             <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i>
           </Button>
-          <Button variant="info" className="ms-2" onClick={handleUnfold}>
-            <i className="bi bi-arrow-bar-right"></i>
-          </Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error &&!selectedDraftForWrite&& (
+      {!loading && !error && !selectedDraftForWrite && !selectedMailDetail && (
         <DraftListContainer>
           {draftMails.length === 0 ? (
             <h2>暂无草稿</h2>
           ) : (
             <>
-              <Accordion>
+              <Container fluid className='text-center' style={{ border: '1px solid black' }}>
+                <Row className="align-items-center">
+                  <Col lg={1}>Select</Col>
+                  <Col lg={1}>状态</Col>
+                  <Col lg={2}>发件人</Col>
+                  <Col lg={2}>发件地址</Col>
+                  <Col lg={2}>主题</Col>
+                  <Col lg={2}>保存时间</Col>
+                  <Col lg={1}>内容</Col>
+                  <Col lg={1}>操作</Col>
+                </Row>
                 {draftMails.map((mail) => (
-                  <Accordion.Item key={mail.id} eventKey={mail.id.toString()} style={theme==='dark'?darkTheme:lightTheme}>
-                    <Accordion.Header>
-                      <Form.Check
-                        type="checkbox"
-                        checked={selectedMails.includes(mail.id)}
-                        onChange={() => handleCheckboxChange(mail.id)}
-                        className="me-2"
-                      />
-                      <div>
-                        <span>To: {mail.receiverId} - </span>
-                        <span>{mail.theme}</span>
-                      </div>
-                    </Accordion.Header>
-                    <Accordion.Body style={theme === 'dark' ? darkTheme : lightTheme}>
-                      <div>{mail.content}</div>
-                      <Button 
-                        variant="primary" 
-                        onClick={() => {setSelectedDraftForWrite(mail);console.log(mail)}}
-                      >
-                        Reveal in Writing
-                      </Button>
-                    </Accordion.Body>
-                  </Accordion.Item>
+                  <MailListItem
+                    key={mail.id}
+                    style={theme === 'dark' ? darkTheme : lightTheme}
+                    className={!mail.isread ? 'unread' : ''}
+                  >
+                    <Row className="align-items-center">
+                      <Col lg={1}>
+                        <Form.Check
+                          type="checkbox"
+                          checked={selectedMails.includes(mail.id)}
+                          onChange={() => handleCheckboxChange(mail.id)}
+                          className="me-2"
+                        />
+                      </Col>
+                      <Col lg={1}>{mail.recstatus === 1 && ' ⭐'} {mail.isread?<i className="bi bi-envelope-open"></i>:<i className="bi bi-envelope"></i>}</Col>
+                      <Col lg={2}>{mail.sendername}</Col>
+                      <Col lg={2}>[{mail.sendaddress}]</Col>
+                      <Col lg={2}>{mail.theme}</Col>
+                      <Col lg={2}>{mail.sendtime}</Col>
+                      <Col lg={1}>{mail.content.substring(0, 50)}...</Col>
+                      <Col lg={1}>
+                        <Button 
+                          variant={theme}
+                          onClick={() => {setSelectedMailDetail(mail);}}
+                        >
+                          Enter
+                        </Button>
+                      </Col>
+                    </Row>
+                  </MailListItem>
                 ))}
-              </Accordion>
+              </Container>
               {totalPages > 1 && (
                 <Pagination className="mt-3">
                   <Pagination.First onClick={() => handlePageChange(1)} />
@@ -284,26 +293,39 @@ const Drafts = () => {
 
       {selectedDraftForWrite && (
         <>
-        <Button variant="secondary" className="mb-3" onClick={() => setSelectedDraftForWrite(null)}>Back</Button>
-        <Write 
-          initialMail={{
-            targetemailaddress: selectedDraftForWrite.recaddress,
-            theme: selectedDraftForWrite.theme,
-            content: selectedDraftForWrite.content
-          }}
-        /></>
+          <Button variant="secondary" className="mb-3" onClick={() => setSelectedDraftForWrite(null)}>Back</Button>
+          <Write 
+            initialMail={{
+              targetemailaddress: selectedDraftForWrite.recaddress,
+              theme: selectedDraftForWrite.theme,
+              content: selectedDraftForWrite.content
+            }}
+          />
+        </>
       )}
 
       {selectedMailDetail && (
-        <MailDetailCard className="mt-3"  style={theme==='dark'?darkTheme:lightTheme}>
+        <MailDetailCard style={theme === 'dark' ? darkTheme : lightTheme}>
           <Card.Header>{selectedMailDetail.theme}</Card.Header>
           <Card.Body>
-            <Button ></Button>
-            <div>收件人 ID: {selectedMailDetail.receiverId}</div>
-            <div>保存时间: {selectedMailDetail.saveTime}</div>
-            <Card.Text>{selectedMailDetail.content}</Card.Text>
+            <div>收件人 ID: {selectedMailDetail.receivername}</div>
+            <div>收件人邮箱: {selectedMailDetail.recaddress}</div>
+
+            <br />
+            Body:
+            <FormControl
+              as="textarea"
+              value={selectedMailDetail.content || ''}
+              readOnly
+              rows={5}
+              style={{ resize: 'none' }}
+            />
+            
             <Button variant="secondary" onClick={() => setSelectedMailDetail(null)}>
               关闭
+            </Button>
+            <Button variant={theme} onClick={() => {setSelectedDraftForWrite(selectedMailDetail);setSelectedMailDetail(null)}}>
+              write
             </Button>
           </Card.Body>
         </MailDetailCard>

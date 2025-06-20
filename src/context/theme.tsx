@@ -65,7 +65,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme());
 
   // 切换主题方法
   const toggleTheme = useCallback(() => {
@@ -100,7 +100,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       mediaQuery.removeEventListener("change", handleSystemThemeChange);
     };
-  });
+  }, []);
 
   // 同步主题到 DOM（可结合 CSS 自定义属性使用）
   useEffect(() => {

@@ -62,7 +62,7 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    await axios.post('http://localhost:8080/user/changename',{
+    await axios.post(`${process.env.API_URL}/user/changename`,{
       username: editedUser.username,
     },{
       headers: {
@@ -96,7 +96,7 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    await axios.post('http://localhost:8080/user/changemail',{
+    await axios.post(`${process.env.API_URL}/user/changemail`,{
       emailAddress: editedUser.emailAddress,
     },{
       headers: {
@@ -137,7 +137,7 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    await axios.post('http://localhost:8080/user/changepswd',{
+    await axios.post(`${process.env.API_URL}/user/changepswd`,{
       password: newPassword
     },{
       headers: {
