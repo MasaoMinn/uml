@@ -6,7 +6,6 @@ import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useTheme,darkTheme,lightTheme } from '@/context/theme';
 import Star from './Star';
-import path from 'path';
 
 // 定义收件箱邮件项类型
 type InboxMailItem = {
@@ -17,7 +16,7 @@ type InboxMailItem = {
   content: string;
   sendTime: string;
   star: number;
-  isread: number;
+  isread: boolean;
   draft: number;
   junk: number;
 };
@@ -63,6 +62,11 @@ type MailDetail = {
 // 定义邮件列表项样式
 const MailListItem = styled(ListGroup.Item)`
   cursor: pointer;
+  // 定义未读邮件的样式
+  &.unread {
+    font-weight: bold;
+    background-color: #f8f9fa;
+  }
 `;
 
 // 定义收件箱列表容器样式
@@ -339,7 +343,7 @@ const download = (id: number, fileName: string) => {
     return (
             <>
       {selectedMailDetail && (
-        <MailDetailCard className="mt-3">
+        <MailDetailCard className="mt-3"  style={theme==='dark'?darkTheme:lightTheme}>
           <Card.Header>{selectedMailDetail?.data.theme}</Card.Header>
           <Card.Body>
             <div>发件人: {selectedMailDetail?.data.sendname} ({selectedMailDetail?.data.sendaddress})</div>
@@ -369,20 +373,27 @@ const download = (id: number, fileName: string) => {
       </>
     )
   }
-  const InputList = ()=> {
-    if(selectedMailDetail) return (<></>);
+  const InputList = () => {
+    const { theme } = useTheme(); // 获取主题状态
+    if (selectedMailDetail) return <></>;
     return (
       <>
-      {selectedMails.length>0 && (
+      {selectedMails.length > 0 && (
         <div className="mb-3">
-          <Button variant="danger" onClick={handleDelete}>Move to Trash</Button>
-          <Button variant="warning" className="ms-2" onClick={handleStar}>Star</Button>
-          <Button variant="info" className="ms-2" onClick={handleUnstar}>Unstar</Button>
+          <Button variant={theme} onClick={handleDelete}>
+            <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i>
+          </Button>
+          <Button variant="warning" className="ms-2" onClick={handleStar}>
+            <i className="bi bi-star"></i>Star
+          </Button>
+          <Button variant="info" className="ms-2" onClick={handleUnstar}>
+            <i className="bi bi-star-fill"></i>UnStar
+          </Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error && (
+      {!loading && !error &&!selectedMailDetail&& (
         <InboxListContainer>
           {inboxMails.length === 0 ? (
             <h2>暂无邮件</h2>
@@ -390,9 +401,10 @@ const download = (id: number, fileName: string) => {
             <>
               <ListGroup >
                 {inboxMails.map((mail) => (
-                  <MailListItem  style={theme==='dark'?darkTheme:lightTheme}
+                  <MailListItem 
+                    style={theme==='dark'?darkTheme:lightTheme}
                     key={mail.id}
-                    isread={mail.isread === 1}
+                    className={!mail.isread ? 'unread' : ''}
                   >
                     <Form.Check
                       type="checkbox"
@@ -401,8 +413,10 @@ const download = (id: number, fileName: string) => {
                       className="me-2"
                     />
                     <div onClick={() => fetchMailDetail(mail.id)}>
-                      <h5>{mail.theme}</h5>
-                      <div>发送时间: {mail.sendTime}</div>
+                      {/* 添加发送时间到第一行 */}
+                      <p>
+                        From: {mail.senderId} - {mail.theme} {mail.sendTime}{mail.star === 1 && ' ⭐'}
+                      </p>
                       <div>内容摘要: {mail.content.substring(0, 50)}...</div>
                     </div>
                   </MailListItem>

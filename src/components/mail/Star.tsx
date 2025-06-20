@@ -4,6 +4,7 @@ import { useUserInfo } from '@/context/user';
 import axios from 'axios';
 import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
+import { darkTheme, lightTheme, useTheme } from '@/context/theme';
 
 // 定义收藏邮件项类型
 type StarMailItem = {
@@ -234,13 +235,16 @@ const Star = () => {
   };
 
   const pageNumbers = getPageNumbers();
+  const {theme} = useTheme();
 
   return (
     <StarContainer>
       <h2>收藏邮件</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
-          <Button variant="info" className="ms-2" onClick={handleUnstar}>Unstar</Button>
+          <Button variant="info" className="ms-2" onClick={handleUnstar}>
+            <i className="bi bi-star-fill"></i> UnStar
+          </Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
@@ -256,8 +260,8 @@ const Star = () => {
                   <MailListItem
                     key={mail.id}
                     isread={mail.isread === 1}
+                    style={theme==='dark'?darkTheme:lightTheme}
                   >
-                    {/* 应用 Inbox 多选框样式 */}
                     <Form.Check
                       type="checkbox"
                       checked={selectedMails.includes(mail.id)}
@@ -265,8 +269,11 @@ const Star = () => {
                       className="me-2"
                     />
                     <div onClick={() => fetchMailDetail(mail.id)}>
-                      <h5>{mail.theme}</h5>
-                      <div>发送时间: {mail.sendTime}</div>
+                      {/* 添加发送时间到第一行 */}
+                      <p>
+                        From: {mail.senderId} - {mail.theme} {mail.sendTime} 
+                        {mail.star === 1 && ' ⭐'}
+                      </p>
                       <div>内容摘要: {mail.content.substring(0, 50)}...</div>
                     </div>
                   </MailListItem>
@@ -280,7 +287,6 @@ const Star = () => {
                     disabled={currentPage === 1}
                     onClick={() => handlePageChange(currentPage - 1)}
                   />
-                  {/* 显示省略号，当当前页不是第一页且起始页码大于 1 时 */}
                   {pageNumbers[0] > 1 && <Pagination.Ellipsis disabled />}
                   {pageNumbers.map((page) => (
                     <Pagination.Item
@@ -291,7 +297,6 @@ const Star = () => {
                       {page}
                     </Pagination.Item>
                   ))}
-                  {/* 显示省略号，当当前页不是最后一页且结束页码小于总页数时 */}
                   {pageNumbers[pageNumbers.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
                   <Pagination.Next
                     disabled={currentPage === totalPages}

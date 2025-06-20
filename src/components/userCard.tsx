@@ -7,6 +7,7 @@ import { Col, Container, Form, Row } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useUserInfo } from '@/context/user';
 import { darkTheme, lightTheme, useTheme } from '@/context/theme';
+import { Dropdown } from 'react-bootstrap';
 
 interface UserData {
   id: number;
@@ -82,16 +83,13 @@ export default () => {
     });
   };
 
-  // 新增：处理邮箱编辑
   const handleEditEmail = () => setIsEditingEmail(true);
 
-  // 新增：取消邮箱编辑
   const handleCancelEditEmail = () => {
     setIsEditingEmail(false);
     setEditedUser(userInfo?.data || defaultUser.data);
   };
 
-  // 新增：保存邮箱修改
   const handleSaveEmail = async () => {
     if (!userInfo) {
       setError('用户信息未找到');
@@ -276,7 +274,11 @@ export default () => {
                     </div>
                   </div>
                 ) : (
-                  <div>
+                  <Row>
+                    <Col>
+                    <i className="bi bi-person-vcard" style={{ fontSize: '2rem' }}></i>
+                    </Col>
+                    <Col>
                     <Card.Text style={{whiteSpace:'nowrap'}}>
                       {userInfo?.data && (
                         <>
@@ -288,25 +290,26 @@ export default () => {
                         </>
                       )}
                     </Card.Text>
-                    <div className="d-flex gap-2">
-                      <Button href='./' variant={`${useTheme().theme}`} style={{border:'2px skyblue solid'}} 
-                         disabled={isLoading}>
-                        {isLoading ? '更新中...' : '刷新数据'}
-                      </Button>
-                      <Button variant="warning" style={{border:'2px orange solid'}} 
-                        onClick={handleEdit} disabled={isLoading}>
-                        修改用户名
-                      </Button>
-                      <Button variant="danger" style={{border:'2px red solid'}} 
-                        onClick={handleChangePassword} disabled={isLoading}>
-                        修改密码
-                      </Button>
-                      <Button variant="info" style={{border:'2px blue solid'}} 
-                        onClick={handleEditEmail} disabled={isLoading}>
-                        修改邮箱
-                      </Button>
-                    </div>
-                  </div>
+                    <Dropdown align="end">
+                      <Dropdown.Toggle variant="primary" id="dropdown-basic" disabled={isLoading}>
+                        {isLoading ? '操作中...' : '操作'}
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu>
+                        <Dropdown.Item href='./' disabled={isLoading}>
+                          {isLoading ? '更新中...' : '刷新数据'}
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={handleEdit} disabled={isLoading}>
+                          修改用户名
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={handleChangePassword} disabled={isLoading}>
+                          修改密码
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={handleEditEmail} disabled={isLoading}>
+                          修改邮箱
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  </Col></Row>
                 )}
               </Card.Body>
             </Col>

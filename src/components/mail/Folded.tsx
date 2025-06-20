@@ -2,30 +2,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUserInfo } from '@/context/user';
 import axios from 'axios';
-import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
+import { ListGroup, Card, Button, Pagination, Form, Accordion } from 'react-bootstrap';
 import styled from 'styled-components';
-import { Accordion } from 'react-bootstrap'; // 引入 Accordion 组件
-import Write from './Write'; // 引入 Write 组件
-import { useTheme, lightTheme, darkTheme } from '@/context/theme';
+import { useTheme } from '@/context/theme';
 
-type DraftMailItem = {
+// 定义折叠邮件项类型
+type FoldedMailItem = {
   id: number;
   receiverId: number;
   theme: string;
   content: string;
   saveTime: string;
-  recaddress:string;
+  recaddress: string;
 };
-type Mail = {
-    targetemailaddress: string;
-    theme: string;
-    content: string;
-};
-type DraftResponse = {
+
+// 定义响应数据类型
+type FoldedResponse = {
   code: number;
   message: string;
   data: {
-    records: DraftMailItem[];
+    records: FoldedMailItem[];
     total: number;
     size: number;
     current: number;
@@ -36,10 +32,13 @@ type DraftResponse = {
 // 定义邮件列表项样式
 const MailListItem = styled(ListGroup.Item)`
   cursor: pointer;
+  &:hover {
+    background-color: #f8f9fa;
+  }
 `;
 
-// 定义草稿列表容器样式
-const DraftListContainer = styled.div`
+// 定义折叠邮件列表容器样式
+const FoldedListContainer = styled.div`
   border: 1px solid #dee2e6;
   border-radius: 4px;
   padding: 16px;
@@ -53,39 +52,38 @@ const MailDetailCard = styled(Card)`
   padding: 16px;
 `;
 
-// 定义整个草稿容器样式
-const DraftsContainer = styled.div`
+// 定义整个折叠邮件容器样式
+const FoldedContainer = styled.div`
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 20px;
   margin-top: 20px;
 `;
 
-const Drafts = () => {
+const Folded = () => {
   const { userInfo } = useUserInfo();
-  const [draftMails, setDraftMails] = useState<DraftMailItem[]>([]);
-  const [selectedMailDetail, setSelectedMailDetail] = useState<DraftMailItem | null>(null);
+  const [foldedMails, setFoldedMails] = useState<FoldedMailItem[]>([]);
+  const [selectedMailDetail, setSelectedMailDetail] = useState<FoldedMailItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [selectedMails, setSelectedMails] = useState<number[]>([]); // 新增选中邮件 ID 数组
-  const [selectedDraftForWrite, setSelectedDraftForWrite] = useState<DraftMailItem | null>(null);
+  const [selectedMails, setSelectedMails] = useState<number[]>([]); 
 
-  // 获取草稿邮件列表
-  const fetchDraftMails = useCallback(async (p: number) => {
+  // 获取折叠邮件列表
+  const fetchFoldedMails = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
     if (!userInfo?.data) {
-      setError('Please log in to view your drafts.');
+      setError('请先登录以查看折叠邮件。');
       setLoading(false);
       return;
     }
     try {
-      // 请替换为实际的草稿邮件接口
-      const response = await axios.post<DraftResponse>('http://localhost:8080/mail/view', {
-        type:3,
+      // 请替换为实际的折叠邮件接口
+      const response = await axios.post<FoldedResponse>('http://localhost:8080/mail/view', {
+        type: 4, 
         pagenumber: p,
         pagesize: pageSize,
       }, {
@@ -95,7 +93,7 @@ const Drafts = () => {
         }
       });
       if (response.data.code === 0) {
-        setDraftMails(response.data.data.records);
+        setFoldedMails(response.data.data.records);
         setTotal(response.data.data.total);
       } else {
         setError(response.data.message);
@@ -104,23 +102,84 @@ const Drafts = () => {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('获取草稿邮件失败');
+        setError('获取折叠邮件失败');
       }
     } finally {
       setLoading(false);
     }
   }, [userInfo, pageSize]);
 
+  // 处理多选框变化
+  const handleCheckboxChange = (mailId: number) => {
+    if (selectedMails.includes(mailId)) {
+      setSelectedMails(selectedMails.filter(id => id!== mailId));
+    } else {
+      setSelectedMails([...selectedMails, mailId]);
+    }
+  };
+
+  // 删除选中邮件
+  const handleDelete = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status: 4, 
+        type: 3, 
+        change: 1,
+        ids: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchFoldedMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('删除邮件失败');
+      }
+    }
+  };
+
+  // 恢复选中邮件
+  const handleRestore = async () => {
+    if (selectedMails.length === 0) return;
+    try {
+      await axios.post('http://localhost:8080/mail/mailopera', {
+        status: 4, 
+        type: 2, 
+        change: 0,
+        ids: selectedMails
+      }, {
+        headers: {
+          Authorization: userInfo?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSelectedMails([]);
+      fetchFoldedMails(currentPage);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('恢复邮件失败');
+      }
+    }
+  };
+
   // 处理分页变化
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
+    if (page < 1 || page > Math.ceil(total / pageSize)) return;
     setCurrentPage(page);
-    fetchDraftMails(page);
+    fetchFoldedMails(page);
   };
 
   useEffect(() => {
-    fetchDraftMails(currentPage);
-  }, [fetchDraftMails, currentPage]);
+    fetchFoldedMails(currentPage);
+  }, [fetchFoldedMails, currentPage]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -142,92 +201,32 @@ const Drafts = () => {
   };
 
   const pageNumbers = getPageNumbers();
-
-  // 处理多选框变化
-  const handleCheckboxChange = (mailId: number) => {
-    if (selectedMails.includes(mailId)) {
-      setSelectedMails(selectedMails.filter(id => id !== mailId));
-    } else {
-      setSelectedMails([...selectedMails, mailId]);
-    }
-  };
-
-  // 删除选中邮件
-  const handleDelete = async () => {
-    if (selectedMails.length === 0) return;
-    try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        status:4,
-        type:3,
-        change:1,
-        id: selectedMails
-      }, {
-        headers: {
-          Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
-        }
-      });
-      setSelectedMails([]);
-      fetchDraftMails(currentPage);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('删除邮件失败');
-      }
-    }
-  };
-
-  const handleUnfold = async () => {
-    if (selectedMails.length === 0) return;
-    try {
-      await axios.post('http://localhost:8080/mail/mailopera', {
-        status:4,
-        change: 0,
-        type: 2,
-        ids: selectedMails
-      }, {
-        headers: {
-          Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
-        }
-      });
-      setSelectedMails([]);
-      fetchDraftMails(currentPage);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Unkown error occurred.');
-      }
-    }
-  };
-  const {theme} =useTheme();
+  const { theme }= useTheme();
 
   return (
-    <DraftsContainer>
-      <h2>草稿箱</h2>
+    <FoldedContainer>
+      <h2>折叠邮件</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
           <Button variant={theme} onClick={handleDelete}>
-            <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i>
+            <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i> 删除
           </Button>
-          <Button variant="info" className="ms-2" onClick={handleUnfold}>
-            <i className="bi bi-arrow-bar-right"></i>
+          <Button variant="success" className="ms-2" onClick={handleRestore}>
+            <i className="bi bi-arrow-return-left"></i> Recover
           </Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error &&!selectedDraftForWrite&& (
-        <DraftListContainer>
-          {draftMails.length === 0 ? (
-            <h2>暂无草稿</h2>
+      {!loading && !error && (
+        <FoldedListContainer>
+          {foldedMails.length === 0 ? (
+            <h2>暂无折叠邮件</h2>
           ) : (
             <>
               <Accordion>
-                {draftMails.map((mail) => (
-                  <Accordion.Item key={mail.id} eventKey={mail.id.toString()} style={theme==='dark'?darkTheme:lightTheme}>
+                {foldedMails.map((mail) => (
+                  <Accordion.Item key={mail.id} eventKey={mail.id.toString()}>
                     <Accordion.Header>
                       <Form.Check
                         type="checkbox"
@@ -236,18 +235,11 @@ const Drafts = () => {
                         className="me-2"
                       />
                       <div>
-                        <span>To: {mail.receiverId} - </span>
-                        <span>{mail.theme}</span>
+                        To: {mail.receiverId} - {mail.theme}  {mail.saveTime}
                       </div>
                     </Accordion.Header>
-                    <Accordion.Body style={theme === 'dark' ? darkTheme : lightTheme}>
+                    <Accordion.Body>
                       <div>{mail.content}</div>
-                      <Button 
-                        variant="primary" 
-                        onClick={() => {setSelectedDraftForWrite(mail);console.log(mail)}}
-                      >
-                        Reveal in Writing
-                      </Button>
                     </Accordion.Body>
                   </Accordion.Item>
                 ))}
@@ -279,37 +271,24 @@ const Drafts = () => {
               )}
             </>
           )}
-        </DraftListContainer>
-      )}
-
-      {selectedDraftForWrite && (
-        <>
-        <Button variant="secondary" className="mb-3" onClick={() => setSelectedDraftForWrite(null)}>Back</Button>
-        <Write 
-          initialMail={{
-            targetemailaddress: selectedDraftForWrite.recaddress,
-            theme: selectedDraftForWrite.theme,
-            content: selectedDraftForWrite.content
-          }}
-        /></>
+        </FoldedListContainer>
       )}
 
       {selectedMailDetail && (
-        <MailDetailCard className="mt-3"  style={theme==='dark'?darkTheme:lightTheme}>
+        <MailDetailCard className="mt-3">
           <Card.Header>{selectedMailDetail.theme}</Card.Header>
           <Card.Body>
-            <Button ></Button>
             <div>收件人 ID: {selectedMailDetail.receiverId}</div>
             <div>保存时间: {selectedMailDetail.saveTime}</div>
             <Card.Text>{selectedMailDetail.content}</Card.Text>
             <Button variant="secondary" onClick={() => setSelectedMailDetail(null)}>
-              关闭
+              Close
             </Button>
           </Card.Body>
         </MailDetailCard>
       )}
-    </DraftsContainer>
+    </FoldedContainer>
   );
 };
 
-export default Drafts;
+export default Folded;

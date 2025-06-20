@@ -4,14 +4,20 @@ import { useUserInfo } from '@/context/user';
 import axios from 'axios';
 import { ListGroup, Card, Button, Pagination, Form } from 'react-bootstrap';
 import styled from 'styled-components';
+import { useTheme ,lightTheme,darkTheme } from '@/context/theme';
 
 // 定义已发送邮件项类型
 type SentMailItem = {
   id: number;
+  senderId: number;
   receiverId: number;
   theme: string;
   content: string;
   sendTime: string;
+  star: number;
+  isread: boolean;
+  draft: number;
+  junk: number;
 };
 
 // 定义已发送邮件响应数据类型
@@ -225,77 +231,84 @@ const Sent = () => {
       }
     }
   };
+  const {theme} =useTheme();
 
   return (
     <SentContainer>
       <h2>已发送</h2>
       {selectedMails.length > 0 && (
         <div className="mb-3">
-          <Button variant="danger" onClick={handleDelete}>Delete</Button>
-          <Button variant="warning" className="ms-2" onClick={handleStar}>Star</Button>
-          <Button variant="info" className="ms-2" onClick={handleUnstar}>Unstar</Button>
+          <Button variant={theme} onClick={handleDelete}>
+            <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i> 删除
+          </Button>
+          <Button variant="warning" className="ms-2" onClick={handleStar}>
+            <i className="bi bi-star"></i> 收藏
+          </Button>
+          <Button variant="info" className="ms-2" onClick={handleUnstar}>
+            <i className="bi bi-star-fill"></i> 取消收藏
+          </Button>
         </div>
       )}
       {loading && <p>加载中...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error && !selectedMailDetail&&(
+      {!loading && !error &&!selectedMailDetail&& (
         <SentListContainer>
           {sentMails.length === 0 ? (
             <h2>暂无已发送邮件</h2>
           ) : (
-            <>
-              <ListGroup>
-                {sentMails.map((mail) => (
-                  <MailListItem
-                    key={mail.id}
-                  >
-                    <Form.Check
-                      type="checkbox"
-                      checked={selectedMails.includes(mail.id)}
-                      onChange={() => handleCheckboxChange(mail.id)}
-                      className="me-2"
-                    />
-                    <div onClick={() => setSelectedMailDetail(mail)}>
-                      <h5>{mail.theme}</h5>
-                      <div>发送时间: {mail.sendTime}</div>
-                      <div>内容摘要: {mail.content.substring(0, 50)}...</div>
-                    </div>
-                  </MailListItem>
-                ))}
-              </ListGroup>
-              {totalPages > 1 && (
-                <Pagination className="mt-3">
-                  {/* 跳转至第一页 */}
-                  <Pagination.First onClick={() => handlePageChange(1)} />
-                  <Pagination.Prev
-                    disabled={currentPage === 1}
-                    onClick={() => handlePageChange(currentPage - 1)}
+            <ListGroup>
+              {sentMails.map((mail) => (
+                <MailListItem
+                  key={mail.id}
+                  style={theme === 'dark' ? darkTheme : lightTheme}
+                >
+                  <Form.Check
+                    type="checkbox"
+                    checked={selectedMails.includes(mail.id)}
+                    onChange={() => handleCheckboxChange(mail.id)}
+                    className="me-2"
                   />
-                  {pageNumbers[0] > 1 && <Pagination.Ellipsis disabled />}
-                  {pageNumbers.map((page) => (
-                    <Pagination.Item
-                      key={page}
-                      active={page === currentPage}
-                      onClick={() => handlePageChange(page)}
-                    >
-                      {page}
-                    </Pagination.Item>
-                  ))}
-                  {pageNumbers[pageNumbers.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
-                  <Pagination.Next
-                    disabled={currentPage === totalPages}
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  />
-                  <Pagination.Last onClick={() => handlePageChange(totalPages)} />
-                </Pagination>
-              )}
-            </>
+                  <div onClick={() => setSelectedMailDetail(mail)}>
+                    <p>
+                      To: {mail.receiverId} - {mail.theme}  {mail.sendTime}
+                      {mail.star === 1 && ' ⭐'}
+                    </p>
+                    <div>内容摘要: {mail.content.substring(0, 50)}...</div>
+                  </div>
+                </MailListItem>
+              ))}
+            </ListGroup>
+          )}
+          {totalPages > 1 && (
+            <Pagination className="mt-3">
+              <Pagination.First onClick={() => handlePageChange(1)} />
+              <Pagination.Prev
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              />
+              {pageNumbers[0] > 1 && <Pagination.Ellipsis disabled />}
+              {pageNumbers.map((page) => (
+                <Pagination.Item
+                  key={page}
+                  active={page === currentPage}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </Pagination.Item>
+              ))}
+              {pageNumbers[pageNumbers.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
+              <Pagination.Next
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              />
+              <Pagination.Last onClick={() => handlePageChange(totalPages)} />
+            </Pagination>
           )}
         </SentListContainer>
       )}
 
       {selectedMailDetail && (
-        <MailDetailCard className="mt-3">
+        <MailDetailCard className="mt-3" style={theme === 'dark' ? darkTheme : lightTheme}>
           <Card.Header>{selectedMailDetail.theme}</Card.Header>
           <Card.Body>
             <div>收件人 ID: {selectedMailDetail.receiverId}</div>

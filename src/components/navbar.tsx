@@ -9,37 +9,59 @@ import { useUserInfo } from '@/context/user';
 import axios from 'axios';
 
 function BasicExample() {
-  const { theme,toggleTheme } = useTheme();
-  const { userInfo } = useUserInfo();
+  const { theme, toggleTheme } = useTheme();
+  const { userInfo, setUserInfo } = useUserInfo();
   const navbarClassName = theme === 'dark' ? 'bg-dark navbar-dark' : 'bg-light navbar-light';
-  const deleteuser = ()=> {
-    axios.post('http://localhost:8080/user/deleteuser',{
-    },{
+  const deleteuser = () => {
+    axios.post('http://localhost:8080/user/deleteuser', {}, {
       headers: {
         Authorization: userInfo?.token
       }
-    }).then((res)=>{
+    }).then((res) => {
       alert(res.data.message);
-    }).catch((err)=>{
+      // 注销用户
+      logout();
+    }).catch((err) => {
       alert(err.response.data.message);
     });
-  }
+  };
+
+  const logout = () => {
+    // 调用 setUserInfo 清除用户信息
+    setUserInfo('', {
+      id: 0,
+      username: '',
+      password: null,
+      emailAddress: '',
+      telephone: '',
+      createTime: '',
+      updateTime: ''
+    });
+    alert('用户已注销');
+  };
+
   return (
     <Navbar expand="lg" className={`align-items-center ${navbarClassName}`}>
       <Container>
-        <Navbar.Brand href="./">Mailbox</Navbar.Brand>
+        <Navbar.Brand href="./"><i className="bi bi-envelope"></i>@Hgmail.com</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto align-items-center">
           </Nav>
           <Nav className="align-items-center">
             <Nav.Link><LoginSheet /></Nav.Link>
-            <NavDropdown title="Dropdown" id="basic-nav-dropdown">
-              <NavDropdown.Item onClick={toggleTheme} className='text-center'>switch theme</NavDropdown.Item>
-              {userInfo?.token&&<NavDropdown.Item><Button onClick={deleteuser} variant='danger'>delete account</Button></NavDropdown.Item>}
+            <NavDropdown title="More" id="basic-nav-dropdown">
+              <NavDropdown.Item onClick={toggleTheme} className='text-center'>theme {theme==='dark'?<i className="bi bi-moon"></i>:<i className="bi bi-sun"></i>}</NavDropdown.Item>
+              {userInfo?.token && (
+                <NavDropdown.Item>
+                  <Button onClick={deleteuser} variant='danger'>
+                    <i className="bi bi-person-exclamation"></i> delete account
+                  </Button>
+                </NavDropdown.Item>
+              )}
               <NavDropdown.Divider />
               <NavDropdown.Item href="./">
-                See us on Github
+                <i className="bi bi-github"></i> See us on Github
               </NavDropdown.Item>
             </NavDropdown>
           </Nav>

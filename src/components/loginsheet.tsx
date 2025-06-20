@@ -28,6 +28,7 @@ export default function LoginSheet() {
     emailAddress: '',
     phoneNumber:null,
   };
+  let pss:string='';
   const [phonen,setPhonen]=useState('');
   const [namen,setNamen] =useState('');
   const [emaila,setEmaila] =useState('');
@@ -84,7 +85,6 @@ const Register = () => {
       });
     }
   const register = () => {
-      console.log(curuser);
     console.log("用户注册：",curuser);
     axios.post('http://localhost:8080/user/register', {
       username: curuser.userName,
@@ -106,6 +106,7 @@ const Register = () => {
       setStatus('login');
     });
   }
+  const [notify, setNotify] = useState('');
     return (
         <Offcanvas show={show} onHide={handleClose} placement='top' className={offcanvasClassName} style={{height: 'auto'}} fluid>
           <Offcanvas.Header closeButton>
@@ -165,6 +166,22 @@ const Register = () => {
             <InputGroup className="mb-3 w-50 mx-auto">
               <InputGroup.Text 
                 id="inputGroup-sizing-default"
+                className="bg-primary text-white border-primary"
+              >
+                Password Confirm
+              </InputGroup.Text>
+              <Form.Control
+                placeholder="password confirm"
+                aria-label="Recipient's username"
+                aria-describedby="basic-addon2"
+                className="border-primary"
+                onChange={(e)=>{pss=e.target.value;if(pss!=curuser.password) setNotify('Password not match');else setNotify('');}}
+              />
+            </InputGroup>
+            {notify && <p className="text-center text-danger" color='red'>{notify}</p>}
+            <InputGroup className="mb-3 w-50 mx-auto">
+              <InputGroup.Text 
+                id="inputGroup-sizing-default"
                 className="bg-primary text-white border-primary w-30 text-center"
               >
                 Phone Number
@@ -174,7 +191,7 @@ const Register = () => {
                 aria-label="Recipient's username"
                 aria-describedby="basic-addon2"
                 className="border-primary"
-                type="number"
+                type="string"
                 onChange={(e)=>{curuser.phoneNumber=e.target.value}}
               />
               <Button variant='primary' onClick={send}>Check</Button>
@@ -200,9 +217,10 @@ const Register = () => {
                 Return to Login
               </Button>
               <Button variant="primary" type="button" className="w-40" onClick={register}>
-                Register
+                Register<i className="bi bi-person-add"></i>
               </Button>
             </div>
+            {err && <p className="text-center text-danger">{err}</p>}
           </Offcanvas.Body>
         </Offcanvas>
     )
@@ -291,10 +309,10 @@ const Login = () => {
             </InputGroup>
             <div className="d-flex justify-content-center gap-2">
               <Button variant="primary" type="button" className="w-40" onClick={login}>
-                Login
+                Login<i className="bi bi-person-check"></i>
               </Button>
               <Button variant={theme} type="button" className="w-40" onClick={() => setStatus('register')}>
-                Register
+                Register<i className="bi bi-person-add"></i>
               </Button>
               <Button variant="link" type="button" className="w-20 text-primary" onClick={() => setStatus('forget1')}>
                 Forgot?
@@ -546,7 +564,7 @@ const Login = () => {
   return (
     <>
       {!userInfo?.data&&<Button variant={theme} onClick={()=>{setStatus('login');handleShow()}}>登录/注册</Button>}
-      {userInfo?.data&&<Button variant={theme} onClick={logout}>退出登录</Button>}
+      {userInfo?.data&&<Button variant={theme} onClick={logout}>退出登录<i className="bi bi-person-dash"></i></Button>}
       {status === 'login' && <Login />}
       {status === 'register' && <Register />}
       {status === 'forget1' && <Forget1 />}
