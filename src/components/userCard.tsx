@@ -160,6 +160,48 @@ export default () => {
       setIsLoading(false);
     });
   };
+  const logout = () => {
+    axios({
+      url: `${process.env.NEXT_PUBLIC_API_URL}/user/logout`,
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: userInfo?.token
+      }
+    }).then(response => {
+      if (response.data.code === 0) {
+        alert('Logout successfully!');
+        setUserInfo('', {
+          id: 0,
+          username: '',
+          password: null,
+          emailAddress: '',
+          telephone: '',
+          createTime: '',
+          updateTime: ''
+        });
+      } else {
+        alert(response.data.message);
+      }
+    }).catch(error => {
+      alert('Logout failed: ' + error);
+    }).finally(() => {
+      location.reload();
+    });
+  }
+  const deleteuser = () => {
+    axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/deleteuser`, {}, {
+      headers: {
+        Authorization: userInfo?.token
+      }
+    }).then((res) => {
+      alert(res.data.message);
+      // 注销用户
+      logout();
+    }).catch((err) => {
+      alert(err.response.data.message);
+    });
+  };
 
   const { theme } = useTheme();
   return (
@@ -273,7 +315,7 @@ export default () => {
                       </Button>
                     </div>
                   </div>
-                ) : (
+                ) : (<>
                   <Row>
                     <Col>
                     <i className="bi bi-person-vcard" style={{ fontSize: '2rem' }}></i>
@@ -290,26 +332,37 @@ export default () => {
                         </>
                       )}
                     </Card.Text>
-                    <Dropdown align="end">
+                  </Col></Row>
+                  <Row>
+                    <Col>
+                    <Button variant={theme} href='./'>Refresh</Button>
+                    </Col>
+                    <Col>
+                    <Dropdown style={{}}>
                       <Dropdown.Toggle variant="primary" id="dropdown-basic" disabled={isLoading}>
-                        {isLoading ? '操作中...' : '操作'}
+                        {isLoading ? 'Modifying...' : 'Modify'}
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
-                        <Dropdown.Item href='./' disabled={isLoading}>
-                          {isLoading ? '更新中...' : '刷新数据'}
-                        </Dropdown.Item>
                         <Dropdown.Item onClick={handleEdit} disabled={isLoading}>
-                          修改用户名
+                          change user name
                         </Dropdown.Item>
                         <Dropdown.Item onClick={handleChangePassword} disabled={isLoading}>
-                          修改密码
+                          change password
                         </Dropdown.Item>
                         <Dropdown.Item onClick={handleEditEmail} disabled={isLoading}>
-                          修改邮箱
+                          change email
                         </Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
-                  </Col></Row>
+                  </Col>
+                  <Col>
+                    <Button onClick={logout} variant={theme}>logout</Button>
+                  </Col>
+                  <Col>
+                    <Button onClick={deleteuser} variant="danger">delete</Button>
+                  </Col>
+                  </Row>
+                  </>
                 )}
               </Card.Body>
             </Col>

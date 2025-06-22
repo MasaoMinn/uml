@@ -26,7 +26,6 @@ function BasicExample() {
       }
     }).then((res) => {
       alert(res.data.message);
-      // 注销用户
       logout();
     }).catch((err) => {
       alert(err.response.data.message);
@@ -34,7 +33,6 @@ function BasicExample() {
   };
 
   const logout = () => {
-    // 调用 setUserInfo 清除用户信息
     setUserInfo('', {
       id: 0,
       username: '',

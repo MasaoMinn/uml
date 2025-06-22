@@ -33,37 +33,6 @@ export default function LoginSheet() {
   const [namen,setNamen] =useState('');
   const [emaila,setEmaila] =useState('');
 
-  const logout = () => {
-    axios({
-      url: `${process.env.NEXT_PUBLIC_API_URL}/user/logout`,
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: userInfo?.token
-      }
-    }).then(response => {
-      if (response.data.code === 0) {
-        alert('Logout successfully!');
-        setUserInfo('', {
-          id: 0,
-          username: '',
-          password: null,
-          emailAddress: '',
-          telephone: '',
-          createTime: '',
-          updateTime: ''
-        });
-      } else {
-        alert(response.data.message);
-      }
-    }).catch(error => {
-      alert('Logout failed: ' + error);
-    }).finally(() => {
-      handleClose();
-      location.reload();
-    });
-  }
-
 const Register = () => {
     let capcha='';
     const [err, setErr] = useState('');
