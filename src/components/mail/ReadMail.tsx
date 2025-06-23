@@ -105,6 +105,9 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [selectedMails, setSelectedMails] = useState<number[]>([]);
+  useEffect(()=>{
+    setSelectedMailDetail(null);
+  },[mailType]);
 
   // 获取邮件列表
   const fetchMails = useCallback(async (p: number) => {
@@ -190,7 +193,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
         status: mailType===3?5:mailType===5?3:mailType,
-        type: 2,
+        type: mailType===4?3:2,
         change: 1,
         ids: selectedMails
       }, {
@@ -229,6 +232,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
       });
       setSelectedMails([]);
       fetchMails(currentPage);
+      alert('收藏成功');
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -254,6 +258,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
       });
       setSelectedMails([]);
       fetchMails(currentPage);
+      alert('取消收藏成功');
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -296,6 +301,25 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
       });
   };
 
+  // 更新邮件已读状态
+  const markMailAsRead = useCallback(async (mailIds: number[]) => { // 修改参数类型为 number[]
+    if (!userInfo?.token) return;
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/isread`, { ids: mailIds }, { // 请求体传入 mailIds
+        headers: {
+          Authorization: userInfo.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      // 更新本地状态
+      setMails(prevMails => prevMails.map(mail => 
+        mailIds.includes(mail.id) ? { ...mail, isread: 1 } : mail // 检查 mail.id 是否在 mailIds 中
+      ));
+    } catch (err) {
+      console.error('更新邮件已读状态失败:', err);
+    }
+  }, [userInfo]);
+
   return (
     <MailContainer style={theme === 'dark' ? darkTheme : lightTheme}>
       {selectedMails.length > 0 && (
@@ -335,42 +359,46 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
                     key={mail.id}
                     className={!mail.isread ? 'unread' : ''}
                   >
-                  <Row className="align-items-center " style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                    <Col lg={1}>
-                      <Form.Check
-                        type="checkbox"
-                        checked={selectedMails.includes(mail.id)}
-                        onChange={() => handleCheckboxChange(mail.id)}
-                        className="me-2"
-                      />
-                    </Col>
-                    <Col lg={1}>
-                      {mail.recstatus === 1 && ' ⭐'} {mail.isread ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
-                    </Col>
-                    <Col lg={1}>{mail.sendername}</Col>
-                    <Col lg={2} style={{overflow:'auto'}}>[{mail.sendaddress}]</Col>
-                    <Col lg={1}>{mail.theme}</Col>
-                    <Col lg={1}>{mail.sendtime}</Col>
-                    <Col 
-                      style={{
-                        overflowY: 'auto',
-                        whiteSpace: 'pre-wrap',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {mail.summary}
-                    </Col>
-                    <Col lg={1}>
-                      <Button variant={theme} onClick={()=>setSelectedMailDetail(mail)}>
-                        Enter
-                      </Button>
-                      {mailType === 3 && ( // 草稿箱状态
-                        <Button variant="info" className="ms-2" onClick={() => onEditDraft(mail as MailItem)}>
-                          Edit
+                    <Row className="align-items-center " style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                      <Col lg={1}>
+                        <Form.Check
+                          type="checkbox"
+                          checked={selectedMails.includes(mail.id)}
+                          onChange={() => handleCheckboxChange(mail.id)}
+                          className="me-2"
+                        />
+                      </Col>
+                      <Col lg={1}>
+                        {mail.recstatus === 1 && ' ⭐'} {mail.isread ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
+                      </Col>
+                      <Col lg={1}>{mail.sendername}</Col>
+                      <Col lg={2} style={{overflow:'auto'}}>[{mail.sendaddress}]</Col>
+                      <Col lg={1}>{mail.theme}</Col>
+                      <Col lg={1}>{mail.sendtime}</Col>
+                      <Col 
+                        style={{
+                          overflowY: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {mailType===3?mail.content:mail.summary}
+                      </Col>
+                      <Col lg={1}>
+                        <Button variant={theme} onClick={()=>{setSelectedMailDetail(mail);
+                          if(mail.isread===0&&mail.recaddress===userInfo?.data.emailAddress) {
+                            markMailAsRead([mail.id]);
+                          }
+                          }}>
+                          Enter
                         </Button>
-                      )}
-                    </Col>
-                  </Row>
+                        {mailType === 3 && ( // 草稿箱状态
+                          <Button variant="info" className="ms-2" onClick={() => onEditDraft(mail as MailItem)}>
+                            Edit
+                          </Button>
+                        )}
+                      </Col>
+                    </Row>
                   </MailListItem>
                 ))}
               </Container>
@@ -451,10 +479,9 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
                   </AttachmentList>
                 </div>
               )}
-              {/* 新增回复按钮 */}
-              <Button variant="primary" onClick={() => onReply(selectedMailDetail.sendaddress, selectedMailDetail.theme)}>
+{mailType===1&&<Button variant="primary" onClick={() => onReply(selectedMailDetail.sendaddress, selectedMailDetail.theme)}>
                 回复
-              </Button>
+              </Button>}
               <Button variant={theme} onClick={() => setSelectedMailDetail(null)}>
                 Close
               </Button>

@@ -319,8 +319,8 @@ export default () => {
                     </div>
                   </div>
                 ) : (<>
-                  <Row>
-                    <Col>
+                  <Row className='align-items-center'>
+                    <Col lg={2}>
                     <i className="bi bi-person-vcard" style={{ fontSize: '2rem' }}></i>
                     </Col>
                     <Col>
@@ -335,7 +335,8 @@ export default () => {
                         </>
                       )}
                     </Card.Text>
-                  </Col></Row>
+                  </Col>
+                  </Row>
                   <Row>
                     <Col>
                     <Button variant={theme} href='./'>Refresh</Button>
@@ -360,12 +361,6 @@ export default () => {
                   </Col>
                   <Col>
                     <Button onClick={logout} variant={theme}>logout</Button>
-                  </Col>
-                  <Col>
-                    <Button onClick={deleteuser} variant="danger">delete</Button>
-                  </Col>
-                  <Col>
-                    <Button onClick={delcookie} variant="warning">del cookie</Button>
                   </Col>
                   </Row>
                   </>

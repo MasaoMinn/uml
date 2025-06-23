@@ -43,6 +43,18 @@ function BasicExample() {
     });
     alert('用户已注销');
   };
+    const delcookie = () => {
+        setUserInfo('', {
+          id: 0,
+          username: '',
+          password: null,
+          emailAddress: '',
+          telephone: '',
+          createTime: '',
+          updateTime: ''
+        });
+        location.reload();
+  }
 
   const handleCloseUserCardOffCanvas = () => setShowUserCardOffCanvas(false);
   const handleShowUserCardOffCanvas = () => setShowUserCardOffCanvas(true);
@@ -62,12 +74,14 @@ function BasicExample() {
               <NavDropdown title="More" id="basic-nav-dropdown">
                 <NavDropdown.Item onClick={toggleTheme} className='text-center'>theme {theme==='dark'?<i className="bi bi-moon"></i>:<i className="bi bi-sun"></i>}</NavDropdown.Item>
                 {userInfo?.token && (
-                  <NavDropdown.Item>
-                    <Button onClick={deleteuser} variant='danger'>
+                  <NavDropdown.Item onClick={deleteuser} className='text-center'>
                       <i className="bi bi-person-exclamation"></i> delete account
-                    </Button>
                   </NavDropdown.Item>
                 )}
+                <NavDropdown.Item onClick={delcookie} className='text-center'>
+                  delCookie
+                </NavDropdown.Item>
+
                 <NavDropdown.Divider />
                 <NavDropdown.Item href="https://gitee.com/Arcues777/mail-demo.git" target='_blank'>
                   <i className="bi bi-github"></i> Back-end on Gitee

@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  basePath: '',
   typescript: {
-    // 忽略 TypeScript 类型检查错误
     ignoreBuildErrors: true,
   },
-    eslint: {
-    // 忽略 ESLint 错误
+  eslint: {
     ignoreDuringBuilds: true,
   },
 };

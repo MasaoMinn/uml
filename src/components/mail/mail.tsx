@@ -99,7 +99,7 @@ export default function MailComponent() {
                 <i className="bi bi-pen"></i>
               </div>
               <div
-                onClick={() => setStatus('inbox')}
+                onClick={() => {setStatus('inbox')}}
                 className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'inbox' ? 'active' : ''}`}
               >
                 Inbox
