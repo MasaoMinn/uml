@@ -36,6 +36,8 @@ export default function LoginSheet() {
 const Register = () => {
     let capcha='';
     const [err, setErr] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const send  = () => {
       console.log(':'+curuser.phoneNumber);
       axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/sendCode`,{
@@ -129,8 +131,15 @@ const Register = () => {
                 aria-label="Recipient's username"
                 aria-describedby="basic-addon2"
                 className="border-primary"
+                type={showPassword ? 'text' : 'password'}
                 onChange={(e)=>curuser.password=e.target.value}
               />
+              <Button
+                variant="outline-primary"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '隐藏' : '显示'}
+              </Button>
             </InputGroup>
             <InputGroup className="mb-3 w-50 mx-auto">
               <InputGroup.Text 
@@ -144,8 +153,15 @@ const Register = () => {
                 aria-label="Recipient's username"
                 aria-describedby="basic-addon2"
                 className="border-primary"
+                type={showConfirmPassword ? 'text' : 'password'}
                 onChange={(e)=>{pss=e.target.value;if(pss!=curuser.password) setNotify('Password not match');else setNotify('');}}
               />
+              <Button
+                variant="outline-primary"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? '隐藏' : '显示'}
+              </Button>
             </InputGroup>
             {notify && <p className="text-center text-danger" color='red'>{notify}</p>}
             <InputGroup className="mb-3 w-50 mx-auto">
@@ -198,6 +214,7 @@ const Register = () => {
 
 const Login = () => {
   const [namae, setNamae] = useState<boolean>(true);
+  const [showPassword, setShowPassword] = useState(false);
   const login =() => {
     console.log("用户登录：",curuser);
     axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/login`, {
@@ -270,11 +287,18 @@ const Login = () => {
               </InputGroup.Text>
               <Form.Control
                 placeholder=""
+                type={showPassword ? 'text' : 'password'}
                 aria-label="Recipient's username"
                 aria-describedby="basic-addon2"
                 className="border-primary"
                 onChange={(e)=>curuser.password=e.target.value}
               />
+              <Button
+                variant="outline-primary"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '隐藏' : '显示'}
+              </Button>
             </InputGroup>
             <div className="d-flex justify-content-center gap-2">
               <Button variant="primary" type="button" className="w-40" onClick={login}>

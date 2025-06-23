@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LoginSheet from "@/components/loginsheet";
 import NavBar from "@/components/navbar";
 import {useUserInfo} from "@/context/user";
@@ -10,12 +10,14 @@ import Mail from "../components/mail/mail";
 export default function Main() {
   
   const {theme} = useTheme();
-  // 根据主题选择对应的样式
-  const containerStyle = theme === 'dark' ? darkTheme : lightTheme;
+  const [mainStyle,setMainStyle] = useState(theme === 'dark' ? darkTheme : lightTheme);
+  useEffect(()=>{
+    setMainStyle(theme === 'dark' ? darkTheme : lightTheme);
+  },[theme]);
   const { userInfo } = useUserInfo();
   return (
     // 应用选择的样式
-    <Container fluid style={containerStyle} className="p-2">
+    <Container fluid style={mainStyle} className="p-2">
           <NavBar />
           <Mail />
     </Container>

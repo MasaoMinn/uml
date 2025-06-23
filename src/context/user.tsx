@@ -21,7 +21,7 @@ const setCookie = (name: string, value: string, days: number) => {
 }
 
 // 辅助函数：获取 cookie
-const getCookie = (name: string) => {
+export const getCookie = (name: string) => {
   if (typeof document !== 'undefined') {
     const nameEQ = name + "=";
     const ca = document.cookie.split(';');

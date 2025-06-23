@@ -62,11 +62,12 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    await axios.post(`${process.env.API_URL}/user/changename`,{
+    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/changename`,{
       username: editedUser.username,
     },{
       headers: {
-        Authorization: userInfo.token
+        Authorization: userInfo.token,
+        'Content-Type': 'application/json'
       }
     }).then((res)=>{
       if(res.data.code === 0) {
@@ -96,7 +97,7 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    await axios.post(`${process.env.API_URL}/user/changemail`,{
+    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/changemail`,{
       emailAddress: editedUser.emailAddress,
     },{
       headers: {
@@ -137,7 +138,7 @@ export default () => {
       return;
     }
     setIsLoading(true);
-    await axios.post(`${process.env.API_URL}/user/changepswd`,{
+    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/changepswd`,{
       password: newPassword
     },{
       headers: {
@@ -160,6 +161,18 @@ export default () => {
       setIsLoading(false);
     });
   };
+  const delcookie = () => {
+        setUserInfo('', {
+          id: 0,
+          username: '',
+          password: null,
+          emailAddress: '',
+          telephone: '',
+          createTime: '',
+          updateTime: ''
+        });
+        location.reload();
+  }
   const logout = () => {
     axios({
       url: `${process.env.NEXT_PUBLIC_API_URL}/user/logout`,
@@ -171,22 +184,13 @@ export default () => {
     }).then(response => {
       if (response.data.code === 0) {
         alert('Logout successfully!');
-        setUserInfo('', {
-          id: 0,
-          username: '',
-          password: null,
-          emailAddress: '',
-          telephone: '',
-          createTime: '',
-          updateTime: ''
-        });
+        delcookie();
       } else {
         alert(response.data.message);
       }
     }).catch(error => {
       alert('Logout failed: ' + error);
     }).finally(() => {
-      location.reload();
     });
   }
   const deleteuser = () => {
@@ -196,8 +200,7 @@ export default () => {
       }
     }).then((res) => {
       alert(res.data.message);
-      // 注销用户
-      logout();
+      delcookie();
     }).catch((err) => {
       alert(err.response.data.message);
     });
@@ -360,6 +363,9 @@ export default () => {
                   </Col>
                   <Col>
                     <Button onClick={deleteuser} variant="danger">delete</Button>
+                  </Col>
+                  <Col>
+                    <Button onClick={delcookie} variant="warning">del cookie</Button>
                   </Col>
                   </Row>
                   </>

@@ -6,6 +6,21 @@ import { useTheme } from "@/context/theme";
 import axios from "axios";
 import { useUserInfo } from "@/context/user";
 
+type DraftMailItem = {
+  id: number;
+  sendername: number;
+  sendaddress: string;
+  receivername: string;
+  recaddress: string;
+  theme: string;
+  content: string;
+  summary: string;
+  sendtime: string;
+  isread: number;
+  sedstatus: number;
+  recstatus: number;
+  attachments: any[];
+};
 // 定义附件项样式
 const AttachmentItem = styled.div`
   display: flex;
@@ -58,17 +73,18 @@ const MailForm = styled(Container)`
 `;
 
 type Mail = {
-  id?:number;
+  id:number;
   targetemailaddress: string;
   theme: string;
   content: string;
 };
 
-interface  WriteProps {
-  initialMail?: Mail;
+interface WriteMailProps {
+  initialMail?: DraftMailItem | null;
+  onBack?: () => void;
 }
 
-const WriteMail = ({initialMail}: WriteProps ) => {
+const WriteMail: React.FC<WriteMailProps> = ({ initialMail, onBack }) => {
   const { theme } = useTheme();
   const { userInfo } = useUserInfo();
   const [bgcolor, setBgcolor] = useState<string>('white');
@@ -77,11 +93,19 @@ const WriteMail = ({initialMail}: WriteProps ) => {
     color: textcolor,
     backgroundColor: bgcolor
   };
-  const [mail, setMail] = useState<Mail>(initialMail || {
-    targetemailaddress: '',
-    theme: '',
-    content: '',
-  });
+  const [mail, setMail] = useState<Mail>(initialMail 
+    ? {
+      id:initialMail.id,
+        targetemailaddress: initialMail.recaddress,
+        theme: initialMail.theme,
+        content: initialMail.content
+      } 
+    : {id:0,
+        targetemailaddress: '',
+        theme: '',
+        content: ''
+      }
+  );
   
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -123,6 +147,9 @@ const WriteMail = ({initialMail}: WriteProps ) => {
       });
 
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/send`, formData, {
+        params:{
+          mailid: mail.id
+        },
         headers: {
           Authorization: userInfo?.token,
           // 不要手动设置 Content-Type，浏览器会自动带上 boundary
@@ -130,6 +157,7 @@ const WriteMail = ({initialMail}: WriteProps ) => {
       });
 
       setMail({
+        id:0,
         targetemailaddress: '',
         theme: '',
         content: '',
@@ -156,6 +184,9 @@ const WriteMail = ({initialMail}: WriteProps ) => {
       });
       
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/save`, formData, {
+        params:{
+          mailid: mail.id
+        },
         headers: {
           Authorization: userInfo?.token,
         }
@@ -199,6 +230,15 @@ const WriteMail = ({initialMail}: WriteProps ) => {
 
   return (
     <MailForm fluid>
+      {onBack && (
+        <Row className="mb-3">
+          <Col>
+            <Button variant="secondary" onClick={onBack}>
+              返回草稿箱
+            </Button>
+          </Col>
+        </Row>
+      )}
       <Row className="align-items-center mb-3">
         <Col xs="auto">
           <MailButton onClick={sendMail} disabled={isSending}>
@@ -279,7 +319,7 @@ const WriteMail = ({initialMail}: WriteProps ) => {
       {attachments.length > 0 && (
         <Row>
           <Col>
-            <h5>附件 ({attachments.length})</h5>
+            <h5>attachments ({attachments.length})</h5>
             {attachments.map((attachment, index) => (
               <AttachmentItem key={index}>
                 <div>

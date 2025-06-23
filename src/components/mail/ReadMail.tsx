@@ -49,7 +49,6 @@ const MailListItem = styled.div`
   // 定义未读邮件的样式
   &.unread {
     font-weight: bold;
-    background-color: #f8f9fa;
   }
   border-bottom: 1px solid #dee2e6;
   padding: 8px 0;
@@ -89,7 +88,14 @@ const AttachmentItem = styled.li`
   margin: 8px 0;
 `;
 
-const ReadMail = ({ mailType }: { mailType: number }) => {
+interface ReadMailProps {
+  mailType: number;
+  onEditDraft: (draft: MailItem) => void;
+  // 修改 onReply 回调函数，添加主题参数
+  onReply: (recipient: string, theme: string) => void; 
+}
+
+const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) => {
   const { userInfo } = useUserInfo();
   const [mails, setMails] = useState<MailItem[]>([]);
   const [selectedMailDetail, setSelectedMailDetail] = useState<MailItem | null>(null);
@@ -183,7 +189,7 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
     if (selectedMails.length === 0) return;
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
-        status: mailType,
+        status: mailType===3?5:mailType===5?3:mailType,
         type: 2,
         change: 1,
         ids: selectedMails
@@ -192,7 +198,9 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
           Authorization: userInfo?.token,
           'Content-Type': 'application/json'
         }
-      });
+      }).then((res)=>{
+        alert(res.data.message);
+      })
       setSelectedMails([]);
       fetchMails(currentPage);
     } catch (err) {
@@ -209,7 +217,7 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
     if (selectedMails.length === 0) return;
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
-        status: mailType,
+        status: mailType===3?5:mailType===5?3:mailType,
         change: 1,
         type: 1,
         ids: selectedMails
@@ -230,12 +238,11 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
     }
   };
 
-  // 取消收藏选中邮件
   const handleUnstar = async () => {
     if (selectedMails.length === 0) return;
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
-        status: mailType,
+        status: mailType===3?5:mailType===5?3:mailType,
         change: 0,
         type: 1,
         ids: selectedMails
@@ -259,7 +266,6 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
   const { theme } = useTheme();
 
   const download = (id: number, fileName: string) => {
-    const token = localStorage.getItem('token');
     axios.get(`${process.env.NEXT_PUBLIC_API_URL}/mail/download?id=${id}`, {
       responseType: 'blob',
       headers: {
@@ -327,7 +333,6 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
                 {mails.map((mail) => (
                   <MailListItem
                     key={mail.id}
-                    style={theme === 'dark' ? darkTheme : lightTheme}
                     className={!mail.isread ? 'unread' : ''}
                   >
                   <Row className="align-items-center " style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
@@ -359,6 +364,11 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
                       <Button variant={theme} onClick={()=>setSelectedMailDetail(mail)}>
                         Enter
                       </Button>
+                      {mailType === 3 && ( // 草稿箱状态
+                        <Button variant="info" className="ms-2" onClick={() => onEditDraft(mail as MailItem)}>
+                          Edit
+                        </Button>
+                      )}
                     </Col>
                   </Row>
                   </MailListItem>
@@ -441,8 +451,12 @@ const ReadMail = ({ mailType }: { mailType: number }) => {
                   </AttachmentList>
                 </div>
               )}
+              {/* 新增回复按钮 */}
+              <Button variant="primary" onClick={() => onReply(selectedMailDetail.sendaddress, selectedMailDetail.theme)}>
+                回复
+              </Button>
               <Button variant={theme} onClick={() => setSelectedMailDetail(null)}>
-                关闭
+                Close
               </Button>
             </Container>
           </Card.Body>

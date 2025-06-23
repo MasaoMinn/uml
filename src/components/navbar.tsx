@@ -14,8 +14,7 @@ import Offcanvas from 'react-bootstrap/Offcanvas';
 
 function BasicExample() {
   const { theme, toggleTheme } = useTheme();
-  const { userInfo, setUserInfo } = useUserInfo();
-  const navbarClassName = theme === 'dark' ? 'bg-dark navbar-dark' : 'bg-light navbar-light';
+  const { userInfo, setUserInfo } = useUserInfo();;
   const [show, setShow] = useState(false);
   const [showUserCardOffCanvas, setShowUserCardOffCanvas] = useState(false);
 
@@ -50,7 +49,7 @@ function BasicExample() {
 
   return (
     <>
-      <Navbar expand="lg" className={`align-items-center ${navbarClassName}`}>
+      <Navbar expand="lg" className={`align-items-center ${theme === 'dark' ? 'bg-dark navbar-dark' : 'bg-light navbar-light'}`}>
         <Container>
           <Navbar.Brand href="./"><i className="bi bi-envelope"></i>@Hgmail.com</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -70,8 +69,11 @@ function BasicExample() {
                   </NavDropdown.Item>
                 )}
                 <NavDropdown.Divider />
-                <NavDropdown.Item href="./">
-                  <i className="bi bi-github"></i> See us on Github
+                <NavDropdown.Item href="https://gitee.com/Arcues777/mail-demo.git" target='_blank'>
+                  <i className="bi bi-github"></i> Back-end on Gitee
+                </NavDropdown.Item>
+                <NavDropdown.Item href="https://github.com/MasaoMinn/uml" target='_blank'>
+                  <i className="bi bi-github"></i> Front-end on Github
                 </NavDropdown.Item>
               </NavDropdown>
             </Nav>
