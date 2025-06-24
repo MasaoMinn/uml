@@ -1,25 +1,33 @@
 "use client";
 import { useEffect, useState } from "react";
-import LoginSheet from "@/components/loginsheet";
 import NavBar from "@/components/navbar";
-import {useUserInfo} from "@/context/user";
-import { Col, Container, Row } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 import { useTheme, darkTheme, lightTheme } from "@/context/theme";
-import UserCard from "@/components/userCard";
 import Mail from "../components/mail/mail";
+import BgImgHandler from "@/components/bgimgHandler";
+
 export default function Main() {
-  
-  const {theme} = useTheme();
-  const [mainStyle,setMainStyle] = useState(theme === 'dark' ? darkTheme : lightTheme);
-  useEffect(()=>{
-    setMainStyle(theme === 'dark' ? darkTheme : lightTheme);
-  },[theme]);
-  const { userInfo } = useUserInfo();
+  const { theme } = useTheme();
+  // 初始化 imgUrl 状态
+  const [imgUrl, setImgUrl] = useState<'/game.png'|'/furry1.png'|'/furry2.png'>('/furry1.png');
+  const { BgImgStyle, DropdownComponent } = BgImgHandler(imgUrl, setImgUrl);
+
+  const [mainStyle, setMainStyle] = useState({
+    ...(theme === 'dark' ? darkTheme : lightTheme),
+    ...BgImgStyle()
+  });
+
+  useEffect(() => {
+    setMainStyle({
+      ...(theme === 'dark' ? darkTheme : lightTheme),
+      ...BgImgStyle()
+    });
+  }, [theme, imgUrl]);
+
   return (
-    // 应用选择的样式
     <Container fluid style={mainStyle} className="p-2">
-          <NavBar />
-          <Mail />
+      <NavBar DropdownComponent={DropdownComponent} />
+      <Mail />
     </Container>
-  )
+  );
 }

@@ -246,10 +246,11 @@ const Login = () => {
           createTime: data.createTime || '',
           updateTime: data.updateTime || '',
         });
+        handleClose();
     }).catch(error => {
         alert(error);
     }).finally(()=> {
-      handleClose();
+      
     });
   }
     return (

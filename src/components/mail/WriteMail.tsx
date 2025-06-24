@@ -145,7 +145,7 @@ const WriteMail: React.FC<WriteMailProps> = ({ initialMail, onBack }) => {
       attachments.forEach((file) => {
         formData.append("attachments", file);
       });
-
+      console.log(JSON.stringify(mail));
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/send`, formData, {
         params:{
           mailid: mail.id

@@ -86,49 +86,49 @@ export default function MailComponent() {
   }, [userInfo, setUserInfo]);
 
   return (
-    <Container className="" fluid>
+    <Container className="" fluid style={{ opacity: 0.8}}>
       <Row className="mb-2" style={{minHeight: '100vh'}}>
         <Col lg={1}>
           <Row>
             <Col>
               <div
                 onClick={handleEnterWrite}
-                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'write' ? 'active' : ''}`}
+                className={`w-100 btn btn-outline-dark text-truncate my-2 py-2 ${status === 'write' ? 'active' : ''}`}
               >
                 Write
                 <i className="bi bi-pen"></i>
               </div>
               <div
                 onClick={() => {setStatus('inbox')}}
-                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'inbox' ? 'active' : ''}`}
+                className={`w-100 btn btn-outline-dark text-truncate my-2 py-2 ${status === 'inbox' ? 'active' : ''}`}
               >
                 Inbox
                 <i className="bi bi-inbox"></i>
               </div>
               <div
                 onClick={() => setStatus('sent')}
-                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'sent' ? 'active' : ''}`}
+                className={`w-100 btn btn-outline-dark text-truncate my-2 py-2 ${status === 'sent' ? 'active' : ''}`}
               >
                 Sent
                 <i className="bi bi-send"></i>
               </div>
               <div
                 onClick={() => setStatus('drafts')}
-                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'drafts' ? 'active' : ''}`}
+                className={`w-100 btn btn-outline-dark text-truncate my-2 py-2 ${status === 'drafts' ? 'active' : ''}`}
               >
                 Drafts
                 <i className="bi bi-file-earmark-text"></i>
               </div>
               <div
                 onClick={() => setStatus('star')}
-                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'star' ? 'active' : ''}`}
+                className={`w-100 btn btn-outline-dark text-truncate my-2 py-2 ${status === 'star' ? 'active' : ''}`}
               >
                 Star
                 <i className="bi bi-star"></i>
               </div>
               <div
                 onClick={() => setStatus('fold')}
-                className={`w-100 btn btn-outline-primary text-truncate my-2 py-2 ${status === 'fold' ? 'active' : ''}`}
+                className={`w-100 btn btn-outline-dark text-truncate my-2 py-2 ${status === 'fold' ? 'active' : ''}`}
               >
                 Fold
                 <i className="bi bi-arrows-collapse"></i>

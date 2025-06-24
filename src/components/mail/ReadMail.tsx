@@ -129,6 +129,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
           'Content-Type': 'application/json'
         }
       });
+      console.log(response.data);
       if (response.data.code === 0) {
         setMails(response.data.data.records);
         setTotal(response.data.data.total);
@@ -357,7 +358,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
                 {mails.map((mail) => (
                   <MailListItem
                     key={mail.id}
-                    className={!mail.isread ? 'unread' : ''}
+                    className={!mail.isread&&mail.sendaddress!=userInfo?.data.emailAddress ? 'unread' : ''}
                   >
                     <Row className="align-items-center " style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                       <Col lg={1}>
@@ -369,7 +370,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
                         />
                       </Col>
                       <Col lg={1}>
-                        {mail.recstatus === 1 && ' ⭐'} {mail.isread ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
+                        {mail.recstatus === 1||mail.sedstatus===1 && ' ⭐'} {mail.isread ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
                       </Col>
                       <Col lg={1}>{mail.sendername}</Col>
                       <Col lg={2} style={{overflow:'auto'}}>[{mail.sendaddress}]</Col>
@@ -458,8 +459,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
                     as="textarea"
                     value={selectedMailDetail.content || ''}
                     readOnly
-                    rows={5}
-                    style={{ resize: 'none' }}
+                    rows={20}
                   />
                 </Col>
               </Row>
