@@ -71,7 +71,7 @@ function BasicExample({ DropdownComponent }: { DropdownComponent: () => JSX.Elem
           </Nav>
           <Nav className="align-items-center">
             <Nav.Link><LoginSheet /></Nav.Link>
-            <Nav.Link onClick={handleShowUserCardOffCanvas}>{userInfo?.data?.username&&<>{userInfo?.data?.username}<Image src={'/header2.jpg'} height={30}></Image></>}</Nav.Link>
+            <Nav.Link onClick={handleShowUserCardOffCanvas}>{userInfo?.data?.username&&<>{userInfo?.data?.username}<Image src={new Date().getMinutes()%6<3?'/header1.jpg':'/header2.jpg'} height={30}></Image></>}</Nav.Link>
             <DropdownComponent />
             <NavDropdown title="More" id="basic-nav-dropdown">
               <NavDropdown.Item onClick={toggleTheme} className='text-center'>theme {theme === 'dark' ? <i className="bi bi-moon"></i> : <i className="bi bi-sun"></i>}</NavDropdown.Item>

@@ -273,10 +273,10 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
   };
 
   // 更新邮件已读状态
-  const markMailAsRead = useCallback(async (mailIds: number[]) => { // 修改参数类型为 number[]
+  const markMailAsRead = useCallback(async (mailIds: number[]) => {
     if (!userInfo?.token) return;
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/isread`, { ids: mailIds }, { // 请求体传入 mailIds
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/isread`, { ids: mailIds }, {
         headers: {
           Authorization: userInfo.token,
           'Content-Type': 'application/json'
@@ -284,12 +284,22 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
       });
       // 更新本地状态
       setMails(prevMails => prevMails.map(mail => 
-        mailIds.includes(mail.id) ? { ...mail, isread: 1 } : mail // 检查 mail.id 是否在 mailIds 中
+        mailIds.includes(mail.id) ? { ...mail, isread: 1 } : mail
       ));
     } catch (err) {
       console.error('更新邮件已读状态失败:', err);
     }
   }, [userInfo]);
+
+  // 一键已读功能
+  const markAllMailsAsRead = useCallback(() => {
+    const allMailIds = mails.map(mail => mail.id);
+    if (allMailIds.length > 0) {
+      markMailAsRead(allMailIds);
+    }
+    alert('Marked!');
+  }, [mails, markMailAsRead]);
+
   const ModifyButtons = () => {
     return (
         <div className="mb-3">
@@ -319,6 +329,13 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
             <>
               <Container fluid className='text-center' style={{ border: '1px solid black'}}>
                 <Row>
+                  <Col>
+                  {(mailType===1||mailType===5)&&<Button variant={theme} onClick={markAllMailsAsRead}>
+                    <i className={`bi ${theme === 'dark' ? 'bi-eye' : 'bi-eye-fill'}`}></i> 全部已读
+                  </Button>}
+                  </Col>
+                </Row>
+                <Row>
                   <Col lg={1}>Select</Col>
                   <Col lg={1}>Status</Col>
                   <Col lg={1}>Sender</Col>
@@ -343,8 +360,8 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
                         />
                       </Col>
                       <Col lg={1}>
-                        {(mail.recstatus === 1||mail.sedstatus===1) && ' ⭐'} {mail.isread||mail.sendaddress===userInfo?.data.emailAddress ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
-
+                        {((mail.recaddress===userInfo?.data.emailAddress&&mail.recstatus === 1)||(mail.sendaddress===userInfo?.data.emailAddress&&mail.sedstatus===1)) && ' ⭐'}
+                        {mail.isread||mail.sendaddress===userInfo?.data.emailAddress ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
                       </Col>
                       <Col lg={1}>{mail.sendername}</Col>
                       <Col lg={2} style={{overflow:'auto'}}>[{mail.sendaddress}]</Col>

@@ -322,7 +322,7 @@ export default () => {
                 ) : (<>
                   <Row className='align-items-center'>
                     <Col>
-                     <Image src={(Math.random()*2)%2===0?'/header1.jpg':'/header2.jpg'} height={100}></Image>
+                     <Image src={new Date().getMinutes()%6<3?'/header1.jpg':'/header2.jpg'} height={100}></Image>
                     </Col>
                     <Col>
                     <Card.Text style={{whiteSpace:'nowrap'}}>
