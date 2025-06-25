@@ -107,6 +107,7 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
   const [selectedMails, setSelectedMails] = useState<number[]>([]);
   useEffect(()=>{
     setSelectedMailDetail(null);
+    setSelectedMails([]);
   },[mailType]);
 
   // 获取邮件列表
@@ -188,86 +189,55 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
     }
   };
 
-  // 删除选中邮件
-  const handleDelete = async () => {
+  // 通用处理函数
+  const handleMailOperation = async (type: number, change: number) => {
     if (selectedMails.length === 0) return;
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
-        status: mailType===3?5:mailType===5?3:mailType,
-        type: mailType===4?3:2,
-        change: 1,
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
+        status: mailType === 3 ? 5 : mailType === 5 ? 3 : mailType,
+        type: mailType === 4 && type === 2 ? 3 : type,
+        change,
         ids: selectedMails
       }, {
         headers: {
           Authorization: userInfo?.token,
           'Content-Type': 'application/json'
         }
-      }).then((res)=>{
-        alert(res.data.message);
-      })
+      });
+
+      if (type === 2) {
+        alert(response.data.message);
+      } else if (type === 1 && change === 1) {
+        alert('收藏成功');
+      } else if (type === 1 && change === 0) {
+        alert('取消收藏成功');
+      }
+
       setSelectedMails([]);
       fetchMails(currentPage);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('删除邮件失败');
+        if (type === 2) {
+          setError('删除邮件失败');
+        } else if (type === 1 && change === 1) {
+          setError('收藏邮件失败');
+        } else if (type === 1 && change === 0) {
+          setError('取消收藏邮件失败');
+        }
       }
     }
   };
+
+  // 删除选中邮件
+  const handleDelete = () => handleMailOperation(2, 1);
 
   // 收藏选中邮件
-  const handleStar = async () => {
-    if (selectedMails.length === 0) return;
-    try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
-        status: mailType===3?5:mailType===5?3:mailType,
-        change: 1,
-        type: 1,
-        ids: selectedMails
-      }, {
-        headers: {
-          Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
-        }
-      });
-      setSelectedMails([]);
-      fetchMails(currentPage);
-      alert('收藏成功');
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('收藏邮件失败');
-      }
-    }
-  };
+  const handleStar = () => handleMailOperation(1, 1);
 
-  const handleUnstar = async () => {
-    if (selectedMails.length === 0) return;
-    try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/mailopera`, {
-        status: mailType===3?5:mailType===5?3:mailType,
-        change: 0,
-        type: 1,
-        ids: selectedMails
-      }, {
-        headers: {
-          Authorization: userInfo?.token,
-          'Content-Type': 'application/json'
-        }
-      });
-      setSelectedMails([]);
-      fetchMails(currentPage);
-      alert('取消收藏成功');
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('取消收藏邮件失败');
-      }
-    }
-  };
+  // 取消收藏选中邮件
+  const handleUnstar = () => handleMailOperation(1, 0);
 
   const { theme } = useTheme();
 
@@ -320,22 +290,25 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
       console.error('更新邮件已读状态失败:', err);
     }
   }, [userInfo]);
+  const ModifyButtons = () => {
+    return (
+        <div className="mb-3">
+          <Button variant={theme} onClick={handleDelete}>
+            <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i> {mailType===4?'彻底删除':'移入折叠箱'}
+          </Button>
+          {mailType!=4&&<Button variant="warning" className="ms-2" onClick={handleStar}>
+            <i className="bi bi-star"></i> 收藏
+          </Button>}
+          {mailType!=4&&<Button variant="info" className="ms-2" onClick={handleUnstar}>
+            <i className="bi bi-star-fill"></i> 取消收藏
+          </Button>}
+        </div>
+    )
+  }
 
   return (
     <MailContainer style={theme === 'dark' ? darkTheme : lightTheme}>
-      {selectedMails.length > 0 && (
-        <div className="mb-3">
-          <Button variant={theme} onClick={handleDelete}>
-            <i className={`bi ${theme === 'dark' ? 'bi-trash' : 'bi-trash-fill'}`}></i> 删除
-          </Button>
-          <Button variant="warning" className="ms-2" onClick={handleStar}>
-            <i className="bi bi-star"></i> 收藏
-          </Button>
-          <Button variant="info" className="ms-2" onClick={handleUnstar}>
-            <i className="bi bi-star-fill"></i> 取消收藏
-          </Button>
-        </div>
-      )}
+      {selectedMails.length > 0&&<ModifyButtons />}
       {loading && <p>loading...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && !selectedMailDetail && (
@@ -370,7 +343,8 @@ const ReadMail: React.FC<ReadMailProps> = ({ mailType, onEditDraft, onReply }) =
                         />
                       </Col>
                       <Col lg={1}>
-                        {mail.recstatus === 1||mail.sedstatus===1 && ' ⭐'} {mail.isread ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
+                        {(mail.recstatus === 1||mail.sedstatus===1) && ' ⭐'} {mail.isread||mail.sendaddress===userInfo?.data.emailAddress ? <i className="bi bi-envelope-open"></i> : <i className="bi bi-envelope"></i>}
+
                       </Col>
                       <Col lg={1}>{mail.sendername}</Col>
                       <Col lg={2} style={{overflow:'auto'}}>[{mail.sendaddress}]</Col>

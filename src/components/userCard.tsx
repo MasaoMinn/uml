@@ -3,11 +3,12 @@ import Card from 'react-bootstrap/Card';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import Spinner from 'react-bootstrap/Spinner';
-import { Col, Container, Form, Row } from 'react-bootstrap';
+import { Col, Container, Form, Image, Row } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useUserInfo } from '@/context/user';
 import { darkTheme, lightTheme, useTheme } from '@/context/theme';
 import { Dropdown } from 'react-bootstrap';
+import { randomInt } from 'node:crypto';
 
 interface UserData {
   id: number;
@@ -320,8 +321,8 @@ export default () => {
                   </div>
                 ) : (<>
                   <Row className='align-items-center'>
-                    <Col lg={2}>
-                    <i className="bi bi-person-vcard" style={{ fontSize: '2rem' }}></i>
+                    <Col>
+                     <Image src={(Math.random()*2)%2===0?'/header1.jpg':'/header2.jpg'} height={100}></Image>
                     </Col>
                     <Col>
                     <Card.Text style={{whiteSpace:'nowrap'}}>

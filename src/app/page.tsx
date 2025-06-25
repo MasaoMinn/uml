@@ -9,7 +9,7 @@ import BgImgHandler from "@/components/bgimgHandler";
 export default function Main() {
   const { theme } = useTheme();
   // 初始化 imgUrl 状态
-  const [imgUrl, setImgUrl] = useState<'/game.png'|'/furry1.png'|'/furry2.png'>('/furry1.png');
+  const [imgUrl, setImgUrl] = useState<'/game.png'|'/furry1.png'|'/furry2.png'|'#FF0000'|'#00FF00'|'#FFFFFF'>('#FFFFFF');
   const { BgImgStyle, DropdownComponent } = BgImgHandler(imgUrl, setImgUrl);
 
   const [mainStyle, setMainStyle] = useState({
